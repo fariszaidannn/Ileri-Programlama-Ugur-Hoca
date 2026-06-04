@@ -1,3 +1,4 @@
+```mermaid
 flowchart TD
     %% Nodes definition
     Start([Start])
