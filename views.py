@@ -3,152 +3,191 @@ import streamlit as st
 from database import Database
 
 def create_auth_page():
-    st.title("Seyahatify")
-    tab1, tab2 = st.tabs(["Log In", "Sign Up"])
-
-    with tab1:
-        st.subheader("Log In to Your Account")
-        login_user = st.text_input("Username", key="login_user")
-        login_pass = st.text_input("Password", type="password", key="login_pass")
+    # Centered modern layout wrap
+    _, center_col, _ = st.columns([1, 2, 1])
+    
+    with center_col:
+        st.markdown("<h1 style='text-align: center; font-weight: 300; letter-spacing: -1px;'>Seyahatify</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #888888; font-size: 14px;'>Your minimalist travel companion</p>", unsafe_allow_html=True)
+        st.space = st.empty() # Generates structural whitespace
         
-        if st.button("Login", type="primary"):
-            user_id = Database.login(login_user, login_pass)
-            if user_id:
-                st.session_state.logged_in_user_id = user_id
-                st.session_state.page = "main"
-                st.rerun()
-            else:
-                st.error("Incorrect username or password!")
-
-    with tab2:
-        st.subheader("Create a New Account")
-        reg_user = st.text_input("Create a Username", key="reg_user")
-        reg_pass = st.text_input("Create a Password", type="password", key="reg_pass")
-        
-        if st.button("Register"):
-            if not reg_user or not reg_pass:
-                st.warning("Fields cannot be empty!")
-            elif Database.register(reg_user, reg_pass):
-                st.success("Account created! You can now log in.")
-            else:
-                st.error("Username already exists!")
+        # Sleek borderless card container
+        with st.container(border=True):
+            tab1, tab2 = st.tabs(["Sign In", "Register"])
+            
+            with tab1:
+                login_user = st.text_input("Username", key="login_user", placeholder="e.g. wanderlust")
+                login_pass = st.text_input("Password", type="password", key="login_pass", placeholder="••••••••")
+                st.markdown("<div style='padding-top: 10px;'></div>", unsafe_allow_html=True)
+                
+                if st.button("Access Dashboard", type="primary", use_container_width=True):
+                    user_id = Database.login(login_user, login_pass)
+                    if user_id:
+                        st.session_state.logged_in_user_id = user_id
+                        st.session_state.page = "main"
+                        st.rerun()
+                    else:
+                        st.error("Incorrect username or password.")
+            
+            with tab2:
+                reg_user = st.text_input("Choose Username", key="reg_user", placeholder="e.g. traveler101")
+                reg_pass = st.text_input("Choose Password", type="password", key="reg_pass", placeholder="••••••••")
+                st.markdown("<div style='padding-top: 10px;'></div>", unsafe_allow_html=True)
+                
+                if st.button("Create Account", use_container_width=True):
+                    if not reg_user or not reg_pass:
+                        st.warning("Fields cannot be left blank.")
+                    elif Database.register(reg_user, reg_pass):
+                        st.success("Account registered! You can now sign in.")
+                    else:
+                        st.error("This username is already taken.")
 
 def create_main_page():
-    # --- SIDEBAR (Trip Checklist) ---
+    # --- MINIMAL SIDEBAR (Checklist Layout) ---
     with st.sidebar:
-        st.header("✓ Trip Checklist")
+        st.markdown("<h3 style='font-weight: 400; letter-spacing: -0.5px;'>Trip Checklist</h3>", unsafe_allow_html=True)
         
-        # Add new Item
-        new_todo = st.text_input("Add personal mission item:", key="todo_input")
-        if st.button("+ Add Item", use_container_width=True):
+        # Minimal input field inline placement
+        new_todo = st.text_input("Add task item", key="todo_input", placeholder="Pack passport...")
+        if st.button("Add to List", use_container_width=True):
             if new_todo.strip():
                 st.session_state.checklist.append({"text": new_todo.strip(), "checked": False})
                 st.rerun()
-
-        # Render Active Checklist Items
+        
+        st.markdown("<div style='margin: 15px 0;'></div>", unsafe_allow_html=True)
+        
+        # Render clean checklist items
         updated_checklist = []
         for idx, item in enumerate(st.session_state.checklist):
             is_checked = st.checkbox(item["text"], value=item["checked"], key=f"todo_check_{idx}")
             updated_checklist.append({"text": item["text"], "checked": is_checked})
         st.session_state.checklist = updated_checklist
 
-        # Action Buttons
-        if st.button("Remove Checked", use_container_width=True):
-            st.session_state.checklist = [item for item in st.session_state.checklist if not item["checked"]]
-            st.rerun()
+        if st.session_state.checklist:
+            if st.button("Clear Checked Items", use_container_width=True):
+                st.session_state.checklist = [i for i in st.session_state.checklist if not i["checked"]]
+                st.rerun()
 
-        st.markdown("---")
+        st.divider()
         
-        if st.button("💾 Save Trip", type="primary", use_container_width=True):
+        # Action Stack
+        if st.button("💾 Save Journey Layout", type="primary", use_container_width=True):
             city = st.session_state.get("city_search_val", "").strip()
             if not city:
-                st.warning("Please enter a destination city before saving the trip!")
+                st.warning("Please specify a target destination city first.")
             elif not st.session_state.checklist:
-                st.warning("Add at least one item to your checklist!")
+                st.warning("Please add at least one item to your list.")
             else:
                 Database.save_trip(st.session_state.logged_in_user_id, city, st.session_state.checklist)
-                st.success(f"Trip to {city.title()} saved successfully!")
+                st.success(f"Trip layout to {city.title()} saved.")
 
-        if st.button("📋 View History", use_container_width=True):
+        if st.button("📋 View Archive History", use_container_width=True):
             st.session_state.page = "history"
             st.rerun()
 
-    # --- MAIN CONTENT AREA ---
-    st.header("Where would you like to travel?")
+    # --- MAIN ENGINE VIEW ---
+    st.markdown("<h2 style='font-weight: 300; letter-spacing: -1px;'>Where are we heading?</h2>", unsafe_allow_html=True)
     
-    # Target Search
-    city_entry = st.text_input("Enter city name:", value=st.session_state.get("city_search_val", ""))
-    
-    if st.button("🔍 Search", type="primary"):
+    # Modern Horizontal Search Box
+    search_col, button_col = st.columns([4, 1])
+    with search_col:
+        city_entry = st.text_input("Search City", value=st.session_state.get("city_search_val", ""), label_visibility="collapsed", placeholder="Enter city name (e.g. Paris)")
+    with button_col:
+        search_clicked = st.button("Explore", type="primary", use_container_width=True)
+        
+    if search_clicked:
         if city_entry.strip():
             st.session_state.city_search_val = city_entry.strip()
             st.session_state.weather_cache = Database.fetch_weather(city_entry.strip())
             st.session_state.news_cache = Database.fetch_news(city_entry.strip())
             st.rerun()
         else:
-            st.warning("Please enter a valid city name!")
+            st.warning("Please input a valid target location name.")
 
-    # Weather Block Display
-    st.subheader("🌤 Weather Information")
-    if "weather_cache" in st.session_state:
-        if "⚠" in st.session_state.weather_cache:
-            st.error(st.session_state.weather_cache)
+    st.markdown("<div style='margin: 20px 0;'></div>", unsafe_allow_html=True)
+    
+    # Structural layout separation
+    left_panel, right_panel = st.columns([2, 3])
+
+    # Left Panel: Weather Summary Card
+    with left_panel:
+        st.markdown("<p style='text-transform: uppercase; font-size: 12px; letter-spacing: 1.5px; color: #888888; font-weight: 600;'>🌤 Weather Report</p>", unsafe_allow_html=True)
+        with st.container(border=True):
+            if "weather_cache" in st.session_state:
+                if "⚠" in st.session_state.weather_cache:
+                    st.caption(st.session_state.weather_cache)
+                else:
+                    st.markdown(f"### {st.session_state.city_search_val.title()}")
+                    # Format standard text return into clean rows
+                    lines = st.session_state.weather_cache.split('\n')
+                    for line in lines:
+                        st.markdown(f"<p style='margin: 4px 0; font-size: 15px;'>{line}</p>", unsafe_allow_html=True)
+            else:
+                st.markdown("<p style='color: #888888; font-size: 14px;'>Awaiting destination choice...</p>", unsafe_allow_html=True)
+
+    # Right Panel: Modern Feed Flow
+    with right_panel:
+        st.markdown("<p style='text-transform: uppercase; font-size: 12px; letter-spacing: 1.5px; color: #888888; font-weight: 600;'>📰 Local Context Briefing</p>", unsafe_allow_html=True)
+        if "news_cache" in st.session_state and st.session_state.news_cache:
+            for idx, article in enumerate(st.session_state.news_cache[:5], 1): # Top 5 elements for clean minimalist scale
+                with st.container(border=False):
+                    st.markdown(f"<a href='{article.get('url', '')}' style='text-decoration: none; color: inherit;' target='_blank'><h5 style='font-weight: 400; margin-bottom: 2px;'>{article.get('title', 'Untitled Context Event')}</h5></a>", unsafe_allow_html=True)
+                    st.markdown(f"<p style='font-size: 12px; color: #888888;'>Source Feed Module #{idx}</p>", unsafe_allow_html=True)
+                    st.markdown("<div style='margin-bottom: 15px; border-bottom: 1px solid #111111;'></div>", unsafe_allow_html=True)
+        elif "news_cache" in st.session_state:
+            st.markdown("<p style='color: #888888; font-size: 14px;'>No regional context elements found for this city.</p>", unsafe_allow_html=True)
         else:
-            st.info(f"**📍 {st.session_state.city_search_val.title()}**\n\n{st.session_state.weather_cache}")
-    else:
-        st.write("Enter a city and click search to see weather information.")
-
-    # News Block Display
-    st.subheader("📰 Latest News")
-    if "news_cache" in st.session_state and st.session_state.news_cache:
-        for idx, article in enumerate(st.session_state.news_cache, 1):
-            with st.container(border=True):
-                st.markdown(f"**{idx}. {article.get('title', 'No title')}**")
-                st.markdown(f"[🔗 Click to read more]({article.get('url', '')})")
-    elif "news_cache" in st.session_state:
-        st.write("No recent news found for this city.")
-    else:
-        st.write("Top headlines will appear here after searching.")
+            st.markdown("<p style='color: #888888; font-size: 14px;'>Awaiting destination choice...</p>", unsafe_allow_html=True)
 
 def create_history_page():
-    st.header("Your Saved Trips")
+    # Top Action Row
+    top_col1, top_col2 = st.columns([4, 1])
+    with top_col1:
+        st.markdown("<h2 style='font-weight: 300; letter-spacing: -1px;'>Saved Journeys Archive</h2>", unsafe_allow_html=True)
+    with top_col2:
+        if st.button("← Back", use_container_width=True):
+            st.session_state.page = "main"
+            st.rerun()
+
+    # Sleek sort control inline filter
+    sort_option = st.selectbox("Order Sequence Filter", ["Newest First", "Oldest First", "Alphabetical (A → Z)"], label_visibility="collapsed")
+    sort_mapping = {"Newest First": "newest", "Oldest First": "oldest", "Alphabetical (A → Z)": "atoz"}
     
-    if st.button("← Back to Dashboard"):
-        st.session_state.page = "main"
-        st.rerun()
-
-    sort_option = st.selectbox("Sort Context:", ["🕐 Newest", "🕰 Oldest", "🔤 A → Z"])
-    sort_mapping = {"🕐 Newest": "newest", "🕰 Oldest": "oldest", "🔤 A → Z": "atoz"}
-    sort_mode = sort_mapping[sort_option]
-
-    sorted_trips = Database.load_trips(st.session_state.logged_in_user_id, sort_mode)
+    sorted_trips = Database.load_trips(st.session_state.logged_in_user_id, sort_mapping[sort_option])
+    st.markdown("<div style='margin: 15px 0;'></div>", unsafe_allow_html=True)
 
     if not sorted_trips:
-        st.info("No saved trips yet. Create a trip from the main dashboard!")
+        st.info("No logs present inside this profile catalog yet.")
         return
 
-    # Modern Bento Grid Representation using Columns
+    # Responsive Grid Layout
     cols = st.columns(2)
     for idx, (trip_id, city) in enumerate(sorted_trips):
         with cols[idx % 2]:
             with st.container(border=True):
-                head_col1, head_col2 = st.columns([4, 1])
-                head_col1.markdown(f"### ✈  {city.title()}")
+                # Clean Header Title + Delete Layout Split
+                card_head_left, card_head_right = st.columns([5, 1])
+                card_head_left.markdown(f"<h4 style='font-weight: 400; margin: 0;'>{city.title()}</h4>", unsafe_allow_html=True)
                 
-                if head_col2.button("🗑", key=f"del_{trip_id}"):
+                if card_head_right.button("✕", key=f"del_{trip_id}", help="Delete log"):
                     Database.delete_trip(trip_id)
-                    st.toast(f"Trip to {city.title()} deleted.")
                     st.rerun()
-
-                st.markdown("**🌤 Weather Context**")
-                st.caption(Database.fetch_weather(city))
-
-                st.markdown("**✓ Checklist Saved**")
+                
+                st.markdown("<div style='margin: 8px 0;'></div>", unsafe_allow_html=True)
+                
+                # Dynamic Weather Fetch Inline
+                st.markdown("<p style='font-size: 11px; text-transform: uppercase; color: #888888; margin-bottom: 2px;'>Weather Capture</p>", unsafe_allow_html=True)
+                st.markdown(f"<p style='font-size: 13px; color: #cccccc;'>{Database.fetch_weather(city).replace('\n', '  |  ')}</p>", unsafe_allow_html=True)
+                
+                st.markdown("<div style='margin: 8px 0;'></div>", unsafe_allow_html=True)
+                
+                # Checklist items
+                st.markdown("<p style='font-size: 11px; text-transform: uppercase; color: #888888; margin-bottom: 4px;'>Tasks Accomplished</p>", unsafe_allow_html=True)
                 items = Database.load_items(trip_id)
                 if items:
                     for item_text, checked in items:
-                        icon = "☑" if checked else "☐"
-                        text_format = f"~~{item_text}~~" if checked else item_text
-                        st.markdown(f"{icon} {text_format}")
+                        status_bullet = "•" if checked else "◦"
+                        text_style = f"text-decoration: line-through; color: #666666;" if checked else "color: #ffffff;"
+                        st.markdown(f"<p style='font-size: 13px; margin: 2px 0; {text_style}'>{status_bullet} {item_text}</p>", unsafe_allow_html=True)
                 else:
-                    st.caption("No items saved for this journey.")
+                    st.caption("Zero tasks assigned to this itinerary registry index.")
