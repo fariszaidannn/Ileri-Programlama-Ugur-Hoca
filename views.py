@@ -1,3 +1,4 @@
+# views.py
 import streamlit as st
 from database import Database
 
@@ -120,40 +121,31 @@ def create_main_page():
         else:
             weather_content = "<p style='color: #8e8e93; font-size: 14px; margin: 0;'>Awaiting destination choice...</p>"
         
-        st.markdown(f"""
-            <div class='ios-bento'>
-                <p class='bento-tag'>🌤 Weather Report</p>
-                {weather_content}
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f"<div class='ios-bento'><p class='bento-tag'>🌤 Weather Report</p>{weather_content}</div>", unsafe_allow_html=True)
 
-    # Right Panel: Modern Feed Flow Bento Box
+    # Right Panel: Modern Feed Flow Bento Box (Fixed Code Indentation Glitch)
     with right_panel:
         if "news_cache" in st.session_state and st.session_state.news_cache:
             articles_html = ""
             for idx, article in enumerate(st.session_state.news_cache[:5], 1):
                 title = article.get('title', 'Untitled Context Event').replace("'", "&#39;").replace('"', '&quot;')
                 url = article.get('url', '#')
-                articles_html += f"""
-                <div style='margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid rgba(142, 142, 147, 0.15);'>
-                    <a href='{url}' style='text-decoration: none; color: inherit;' target='_blank'>
-                        <h5 style='font-weight: 500; margin: 0 0 4px 0; font-size: 15px; line-height: 1.45;'>{title}</h5>
-                    </a>
-                    <p style='font-size: 11px; color: #8e8e93; margin: 0;'>Source Feed Module #{idx}</p>
-                </div>
-                """
+                # Strings are concatenated inline without leading spaces to block markdown pre-formatting
+                articles_html += (
+                    f"<div style='margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid rgba(142, 142, 147, 0.15);'>"
+                    f"<a href='{url}' style='text-decoration: none; color: inherit;' target='_blank'>"
+                    f"<h5 style='font-weight: 500; margin: 0 0 4px 0; font-size: 15px; line-height: 1.45;'>{title}</h5>"
+                    f"</a>"
+                    f"<p style='font-size: 11px; color: #8e8e93; margin: 0;'>Source Feed Module #{idx}</p>"
+                    f"</div>"
+                )
             news_content = f"<div style='margin-top: 6px;'>{articles_html}</div>"
         elif "news_cache" in st.session_state:
             news_content = "<p style='color: #8e8e93; font-size: 14px; margin: 0;'>No regional context elements found for this city.</p>"
         else:
             news_content = "<p style='color: #8e8e93; font-size: 14px; margin: 0;'>Awaiting destination choice...</p>"
 
-        st.markdown(f"""
-            <div class='ios-bento'>
-                <p class='bento-tag'>📰 Local Context Briefing</p>
-                {news_content}
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f"<div class='ios-bento'><p class='bento-tag'>📰 Local Context Briefing</p>{news_content}</div>", unsafe_allow_html=True)
 
 def create_history_page():
     # Top Action Row
