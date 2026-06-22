@@ -1,4 +1,3 @@
-# views.py
 import streamlit as st
 from database import Database
 
@@ -109,35 +108,52 @@ def create_main_page():
     # Structural layout separation
     left_panel, right_panel = st.columns([2, 3])
 
-    # Left Panel: Weather Summary Card
+    # Left Panel: Weather Summary Bento Box
     with left_panel:
-        st.markdown("<p style='text-transform: uppercase; font-size: 12px; letter-spacing: 1.5px; color: #888888; font-weight: 600;'>🌤 Weather Report</p>", unsafe_allow_html=True)
-        with st.container(border=True):
-            if "weather_cache" in st.session_state:
-                if "⚠" in st.session_state.weather_cache:
-                    st.caption(st.session_state.weather_cache)
-                else:
-                    st.markdown(f"### {st.session_state.city_search_val.title()}")
-                    # Format standard text return into clean rows
-                    lines = st.session_state.weather_cache.split('\n')
-                    for line in lines:
-                        st.markdown(f"<p style='margin: 4px 0; font-size: 15px;'>{line}</p>", unsafe_allow_html=True)
+        if "weather_cache" in st.session_state:
+            if "⚠" in st.session_state.weather_cache:
+                weather_content = f"<p style='color: #ff4b4b; margin: 0;'>{st.session_state.weather_cache}</p>"
             else:
-                st.markdown("<p style='color: #888888; font-size: 14px;'>Awaiting destination choice...</p>", unsafe_allow_html=True)
-
-    # Right Panel: Modern Feed Flow
-    with right_panel:
-        st.markdown("<p style='text-transform: uppercase; font-size: 12px; letter-spacing: 1.5px; color: #888888; font-weight: 600;'>📰 Local Context Briefing</p>", unsafe_allow_html=True)
-        if "news_cache" in st.session_state and st.session_state.news_cache:
-            for idx, article in enumerate(st.session_state.news_cache[:5], 1): # Top 5 elements for clean minimalist scale
-                with st.container(border=False):
-                    st.markdown(f"<a href='{article.get('url', '')}' style='text-decoration: none; color: inherit;' target='_blank'><h5 style='font-weight: 400; margin-bottom: 2px;'>{article.get('title', 'Untitled Context Event')}</h5></a>", unsafe_allow_html=True)
-                    st.markdown(f"<p style='font-size: 12px; color: #888888;'>Source Feed Module #{idx}</p>", unsafe_allow_html=True)
-                    st.markdown("<div style='margin-bottom: 15px; border-bottom: 1px solid #111111;'></div>", unsafe_allow_html=True)
-        elif "news_cache" in st.session_state:
-            st.markdown("<p style='color: #888888; font-size: 14px;'>No regional context elements found for this city.</p>", unsafe_allow_html=True)
+                lines = st.session_state.weather_cache.split('  |  ')
+                lines_html = "".join([f"<p style='margin: 8px 0; font-size: 15px;'>{line}</p>" for line in lines])
+                weather_content = f"<h3 style='margin: 0 0 10px 0; font-weight: 600; letter-spacing: -0.5px;'>{st.session_state.city_search_val.title()}</h3>{lines_html}"
         else:
-            st.markdown("<p style='color: #888888; font-size: 14px;'>Awaiting destination choice...</p>", unsafe_allow_html=True)
+            weather_content = "<p style='color: #8e8e93; font-size: 14px; margin: 0;'>Awaiting destination choice...</p>"
+        
+        st.markdown(f"""
+            <div class='ios-bento'>
+                <p class='bento-tag'>🌤 Weather Report</p>
+                {weather_content}
+            </div>
+        """, unsafe_allow_html=True)
+
+    # Right Panel: Modern Feed Flow Bento Box
+    with right_panel:
+        if "news_cache" in st.session_state and st.session_state.news_cache:
+            articles_html = ""
+            for idx, article in enumerate(st.session_state.news_cache[:5], 1):
+                title = article.get('title', 'Untitled Context Event').replace("'", "&#39;").replace('"', '&quot;')
+                url = article.get('url', '#')
+                articles_html += f"""
+                <div style='margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid rgba(142, 142, 147, 0.15);'>
+                    <a href='{url}' style='text-decoration: none; color: inherit;' target='_blank'>
+                        <h5 style='font-weight: 500; margin: 0 0 4px 0; font-size: 15px; line-height: 1.45;'>{title}</h5>
+                    </a>
+                    <p style='font-size: 11px; color: #8e8e93; margin: 0;'>Source Feed Module #{idx}</p>
+                </div>
+                """
+            news_content = f"<div style='margin-top: 6px;'>{articles_html}</div>"
+        elif "news_cache" in st.session_state:
+            news_content = "<p style='color: #8e8e93; font-size: 14px; margin: 0;'>No regional context elements found for this city.</p>"
+        else:
+            news_content = "<p style='color: #8e8e93; font-size: 14px; margin: 0;'>Awaiting destination choice...</p>"
+
+        st.markdown(f"""
+            <div class='ios-bento'>
+                <p class='bento-tag'>📰 Local Context Briefing</p>
+                {news_content}
+            </div>
+        """, unsafe_allow_html=True)
 
 def create_history_page():
     # Top Action Row
