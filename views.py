@@ -113,39 +113,46 @@ def create_main_page():
     with left_panel:
         if "weather_cache" in st.session_state:
             if "⚠" in st.session_state.weather_cache:
-                weather_content = f"<p style='color: #ff4b4b; margin: 0;'>{st.session_state.weather_cache}</p>"
+                weather_content = f"<p style='color:#ff4b4b;margin:0;'>{st.session_state.weather_cache}</p>"
             else:
                 lines = st.session_state.weather_cache.split('  |  ')
-                lines_html = "".join([f"<p style='margin: 8px 0; font-size: 15px;'>{line}</p>" for line in lines])
-                weather_content = f"<h3 style='margin: 0 0 10px 0; font-weight: 600; letter-spacing: -0.5px;'>{st.session_state.city_search_val.title()}</h3>{lines_html}"
+                lines_html = "".join([f"<p style='margin:8px 0;font-size:15px;'>{line.strip()}</p>" for line in lines])
+                weather_content = f"<h3 style='margin:0 0 10px 0;font-weight:600;letter-spacing:-0.5px;'>{st.session_state.city_search_val.title()}</h3>{lines_html}"
         else:
-            weather_content = "<p style='color: #8e8e93; font-size: 14px; margin: 0;'>Awaiting destination choice...</p>"
+            weather_content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>Awaiting destination choice...</p>"
         
-        st.markdown(f"<div class='ios-bento'><p class='bento-tag'>🌤 Weather Report</p>{weather_content}</div>", unsafe_allow_html=True)
+        # Cleaned of all literal formatting indents and forced to flat text line
+        weather_bento_html = f"<div class='ios-bento'><p class='bento-tag'>🌤 Weather Report</p>{weather_content}</div>".replace("\n", "").replace("\r", "")
+        st.markdown(weather_bento_html, unsafe_allow_html=True)
 
-    # Right Panel: Modern Feed Flow Bento Box (Fixed Code Indentation Glitch)
+    # Right Panel: Modern Feed Flow Bento Box (Completely Flat String Extraction)
     with right_panel:
         if "news_cache" in st.session_state and st.session_state.news_cache:
             articles_html = ""
             for idx, article in enumerate(st.session_state.news_cache[:5], 1):
+                # Sanitize text payloads from incoming API feeds to secure string bounds
                 title = article.get('title', 'Untitled Context Event').replace("'", "&#39;").replace('"', '&quot;')
+                title = title.replace("\n", " ").replace("\r", " ").strip()
                 url = article.get('url', '#')
-                # Strings are concatenated inline without leading spaces to block markdown pre-formatting
+                
+                # Appended string contains zero indentation syntax spaces
                 articles_html += (
-                    f"<div style='margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid rgba(142, 142, 147, 0.15);'>"
-                    f"<a href='{url}' style='text-decoration: none; color: inherit;' target='_blank'>"
-                    f"<h5 style='font-weight: 500; margin: 0 0 4px 0; font-size: 15px; line-height: 1.45;'>{title}</h5>"
+                    f"<div style='margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid rgba(142,142,147,0.15);'>"
+                    f"<a href='{url}' style='text-decoration:none;color:inherit;' target='_blank'>"
+                    f"<h5 style='font-weight:500;margin:0 0 4px 0;font-size:15px;line-height:1.45;'>{title}</h5>"
                     f"</a>"
-                    f"<p style='font-size: 11px; color: #8e8e93; margin: 0;'>Source Feed Module #{idx}</p>"
+                    f"<p style='font-size:11px;color:#8e8e93;margin:0;'>Source Feed Module #{idx}</p>"
                     f"</div>"
                 )
-            news_content = f"<div style='margin-top: 6px;'>{articles_html}</div>"
+            news_content = f"<div style='margin-top:6px;'>{articles_html}</div>"
         elif "news_cache" in st.session_state:
-            news_content = "<p style='color: #8e8e93; font-size: 14px; margin: 0;'>No regional context elements found for this city.</p>"
+            news_content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>No regional context elements found for this city.</p>"
         else:
-            news_content = "<p style='color: #8e8e93; font-size: 14px; margin: 0;'>Awaiting destination choice...</p>"
+            news_content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>Awaiting destination choice...</p>"
 
-        st.markdown(f"<div class='ios-bento'><p class='bento-tag'>📰 Local Context Briefing</p>{news_content}</div>", unsafe_allow_html=True)
+        # Enforce structural flat packing to strip all layout interpretation hooks out of markdown processing
+        news_bento_html = f"<div class='ios-bento'><p class='bento-tag'>📰 Local Context Briefing</p>{news_content}</div>".replace("\n", "").replace("\r", "")
+        st.markdown(news_bento_html, unsafe_allow_html=True)
 
 def create_history_page():
     # Top Action Row
