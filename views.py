@@ -7,7 +7,8 @@ def create_auth_page():
     _, center_col, _ = st.columns([1, 2, 1])
     
     with center_col:
-        st.markdown("<h1 style='text-align: center; font-weight: 300; letter-spacing: -1px;'>Seyahatify</h1>", unsafe_allow_html=True)
+        # Title updated to premium Gold with a companion travel icon
+        st.markdown("<h1 style='text-align: center; font-weight: 300; letter-spacing: -1px; color: #D4AF37;'>🧭 Seyahatify</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: #888888; font-size: 14px;'>Your minimalist travel companion</p>", unsafe_allow_html=True)
         st.space = st.empty() # Generates structural whitespace
         
@@ -121,21 +122,18 @@ def create_main_page():
         else:
             weather_content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>Awaiting destination choice...</p>"
         
-        # Cleaned of all literal formatting indents and forced to flat text line
         weather_bento_html = f"<div class='ios-bento'><p class='bento-tag'>🌤 Weather Report</p>{weather_content}</div>".replace("\n", "").replace("\r", "")
         st.markdown(weather_bento_html, unsafe_allow_html=True)
 
-    # Right Panel: Modern Feed Flow Bento Box (Completely Flat String Extraction)
+    # Right Panel: Modern Feed Flow Bento Box
     with right_panel:
         if "news_cache" in st.session_state and st.session_state.news_cache:
             articles_html = ""
             for idx, article in enumerate(st.session_state.news_cache[:5], 1):
-                # Sanitize text payloads from incoming API feeds to secure string bounds
                 title = article.get('title', 'Untitled Context Event').replace("'", "&#39;").replace('"', '&quot;')
                 title = title.replace("\n", " ").replace("\r", " ").strip()
                 url = article.get('url', '#')
                 
-                # Appended string contains zero indentation syntax spaces
                 articles_html += (
                     f"<div style='margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid rgba(142,142,147,0.15);'>"
                     f"<a href='{url}' style='text-decoration:none;color:inherit;' target='_blank'>"
@@ -150,7 +148,6 @@ def create_main_page():
         else:
             news_content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>Awaiting destination choice...</p>"
 
-        # Enforce structural flat packing to strip all layout interpretation hooks out of markdown processing
         news_bento_html = f"<div class='ios-bento'><p class='bento-tag'>📰 Local Context Briefing</p>{news_content}</div>".replace("\n", "").replace("\r", "")
         st.markdown(news_bento_html, unsafe_allow_html=True)
 
