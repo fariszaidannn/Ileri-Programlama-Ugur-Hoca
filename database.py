@@ -164,15 +164,14 @@ class Database:
 
     @staticmethod
     def fetch_news(city):
-        """Calls NewsAPI using secure Streamlit secrets."""
+        """Calls SerpApi Google News Light API using secure Streamlit secrets."""
         try:
-            api_key = st.secrets["NEWS_API_KEY"]
-            url  = (f"https://newsapi.org/v2/everything"
-                    f"?q={city}&pageSize=10&sortBy=publishedAt"
-                    f"&apiKey={api_key}")
+            api_key = st.secrets["SERPAPI_API_KEY"]
+            url = (f"https://serpapi.com/search.json"
+                   f"?engine=google_news_light&q={city}&api_key={api_key}")
             data = requests.get(url, timeout=5).json()
-            if data.get("status") == "ok":
-                return data.get("articles", [])
+            # SerpApi references the list payload within the 'news_results' key block
+            return data.get("news_results", [])
         except Exception:
             pass
         return []
