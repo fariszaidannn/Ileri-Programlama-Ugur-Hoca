@@ -125,14 +125,17 @@ def create_main_page():
         weather_bento_html = f"<div class='ios-bento'><p class='bento-tag'>🌤 Weather Report</p>{weather_content}</div>".replace("\n", "").replace("\r", "")
         st.markdown(weather_bento_html, unsafe_allow_html=True)
 
-    # Right Panel: Modern Feed Flow Bento Box
+    # Right Panel: Modern Feed Flow Bento Box (Mapped to SerpApi Architecture)
     with right_panel:
         if "news_cache" in st.session_state and st.session_state.news_cache:
             articles_html = ""
             for idx, article in enumerate(st.session_state.news_cache[:5], 1):
+                # Sanitize text configurations from incoming API values to block markdown format collapse
                 title = article.get('title', 'Untitled Context Event').replace("'", "&#39;").replace('"', '&quot;')
                 title = title.replace("\n", " ").replace("\r", " ").strip()
-                url = article.get('url', '#')
+                
+                # Updated: SerpApi schemas pass link records under the 'link' dictionary key
+                url = article.get('link', '#')
                 
                 articles_html += (
                     f"<div style='margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid rgba(142,142,147,0.15);'>"
