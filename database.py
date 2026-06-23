@@ -174,17 +174,3 @@ class Database:
         except Exception:
             pass
         return []
-
-    @staticmethod
-    def fetch_events(city):
-        """Calls SerpApi Google Events API using secure Streamlit secrets."""
-        try:
-            api_key = st.secrets["SERPAPI_API_KEY"]
-            # Target query parameters configured specifically for the Google Events engine
-            url = (f"https://serpapi.com/search.json"
-                   f"?engine=google_events&q=Events+in+{city}&api_key={api_key}")
-            data = requests.get(url, timeout=5).json()
-            return data.get("events_results", [])
-        except Exception:
-            pass
-        return []
