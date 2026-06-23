@@ -235,5 +235,5 @@ def create_history_page():
                 else:
                     copy_text += "  (None)\n"
                 
-                # Append native Streamlit copy button widget
-                st.copy_to_clipboard(copy_text)
+                # Fixed line 239: Using st.code with language=None provides a clean clipboard widget natively
+                st.code(copy_text, language=None)
