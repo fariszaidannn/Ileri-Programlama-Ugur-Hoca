@@ -1,3 +1,4 @@
+# main.py
 import streamlit as st
 from database import Database
 import views
@@ -6,13 +7,18 @@ def main():
     # Page Title Context
     st.set_page_config(page_title="Seyahatify - Trip Planner", layout="wide")
     
-    # Inject Global CSS for Plus Jakarta Sans and iOS Bento Box styling
+    # Inject Refined Global CSS for Plus Jakarta Sans and iOS Bento Box styling
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
         
-        /* Force font application across all elements */
-        html, body, [data-testid="stAppViewContainer"], .stApp, p, h1, h2, h3, h4, h5, h6, span, a, input, button, label, div {
+        /* Apply font safely to core text and structural blocks without breaking native icons */
+        html, body, [data-testid="stAppViewContainer"], .stApp, p, h1, h2, h3, h4, h5, h6, label {
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+        }
+        
+        /* Direct targeting for standard buttons and inputs to prevent icon corruption */
+        .stButton button, .stTextInput input {
             font-family: 'Plus Jakarta Sans', sans-serif !important;
         }
         
