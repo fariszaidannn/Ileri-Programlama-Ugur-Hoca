@@ -1,3 +1,4 @@
+# main.py
 import streamlit as st
 from database import Database
 import views
