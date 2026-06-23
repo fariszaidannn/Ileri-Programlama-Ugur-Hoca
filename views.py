@@ -7,7 +7,6 @@ def create_auth_page():
     _, center_col, _ = st.columns([1, 2, 1])
     
     with center_col:
-        # Title updated to premium Gold with a companion travel icon
         st.markdown("<h1 style='text-align: center; font-weight: 300; letter-spacing: -1px; color: #D4AF37;'>🧭 Seyahatify</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: #888888; font-size: 14px;'>Your minimalist travel companion</p>", unsafe_allow_html=True)
         st.space = st.empty() # Generates structural whitespace
@@ -117,8 +116,8 @@ def create_main_page():
                 weather_content = f"<p style='color:#ff4b4b;margin:0;'>{st.session_state.weather_cache}</p>"
             else:
                 lines = st.session_state.weather_cache.split('  |  ')
-                lines_html = "".join([f"<p style='margin: 8px 0; font-size: 15px;'>{line.strip()}</p>" for line in lines])
-                weather_content = f"<h3 style='margin: 0 0 10px 0; font-weight: 600; letter-spacing: -0.5px;'>{st.session_state.city_search_val.title()}</h3>{lines_html}"
+                lines_html = "".join([f"<p style='margin:8px 0;font-size:15px;'>{line.strip()}</p>" for line in lines])
+                weather_content = f"<h3 style='margin:0 0 10px 0;font-weight:600;letter-spacing:-0.5px;'>{st.session_state.city_search_val.title()}</h3>{lines_html}"
         else:
             weather_content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>Awaiting destination choice...</p>"
         
@@ -135,14 +134,14 @@ def create_main_page():
                 url = article.get('link', '#')
                 
                 articles_html += (
-                    f"<div style='margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid rgba(142, 142, 147, 0.15);'>"
-                    f"<a href='{url}' style='text-decoration: none; color: inherit;' target='_blank'>"
-                    f"<h5 style='font-weight: 500; margin: 0 0 4px 0; font-size: 15px; line-height: 1.45;'>{title}</h5>"
+                    f"<div style='margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid rgba(142,142,147,0.15);'>"
+                    f"<a href='{url}' style='text-decoration:none;color:inherit;' target='_blank'>"
+                    f"<h5 style='font-weight:500;margin:0 0 4px 0;font-size:15px;line-height:1.45;'>{title}</h5>"
                     f"</a>"
-                    f"<p style='font-size: 11px; color: #8e8e93; margin: 0;'>Source Feed Module #{idx}</p>"
+                    f"<p style='font-size:11px;color:#8e8e93;margin:0;'>Source Feed Module #{idx}</p>"
                     f"</div>"
                 )
-            news_content = f"<div style='margin-top: 6px;'>{articles_html}</div>"
+            news_content = f"<div style='margin-top:6px;'>{articles_html}</div>"
         elif "news_cache" in st.session_state:
             news_content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>No regional context elements found for this city.</p>"
         else:
@@ -194,20 +193,21 @@ def create_history_page():
                 
                 st.markdown("<div style='margin: 8px 0;'></div>", unsafe_allow_html=True)
                 
-                # Split tasks cleanly into Remaining vs Completed sets
+                # Separate task logs into precise category subsets
                 items = Database.load_items(trip_id)
                 pending_items = [item_text for item_text, checked in items if not checked]
                 completed_items = [item_text for item_text, checked in items if checked]
                 
-                # Distinctly reveal unchecked items first so they are never hidden
+                # Render Unchecked Tasks (Always shows what task isn't done yet)
                 if pending_items:
                     st.markdown("<p style='font-size: 11px; text-transform: uppercase; color: #ffbc00; margin-bottom: 4px;'>⏳ Remaining Tasks</p>", unsafe_allow_html=True)
                     for item_text in pending_items:
                         st.markdown(f"<p style='font-size: 13px; margin: 2px 0; color: #ffffff;'>◦ {item_text}</p>", unsafe_allow_html=True)
                 
-                # Render checked list items inline below
+                # Render Completed Tasks
                 if completed_items:
-                    st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)
+                    if pending_items:
+                        st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)
                     st.markdown("<p style='font-size: 11px; text-transform: uppercase; color: #00fa9a; margin-bottom: 4px;'>✅ Completed Tasks</p>", unsafe_allow_html=True)
                     for item_text in completed_items:
                         st.markdown(f"<p style='font-size: 13px; margin: 2px 0; text-decoration: line-through; color: #666666;'>• {item_text}</p>", unsafe_allow_html=True)
@@ -217,22 +217,23 @@ def create_history_page():
                 
                 st.markdown("<div style='margin-top: 14px;'></div>", unsafe_allow_html=True)
                 
-                # --- CLIPBOARD GENERATOR ENGINE ---
-                copy_string = f"📌 SEYAHATIFY TRIP SNAPSHOT: {city.title()}\n"
-                copy_string += f"🌤 Weather Condition: {weather_str}\n\n"
-                copy_string += "⏳ REMAINING TO-DO ITEMS:\n"
+                # --- STRUCTURED TEXT CONSTRUCTOR FOR CLIPBOARD ---
+                copy_text = f"📌 SEYAHATIFY TRAVEL PACK: {city.title()}\n"
+                copy_text += f"🌤️ Weather Profile: {weather_str}\n\n"
+                
+                copy_text += "⏳ REMAINING TO-DO ITEMS:\n"
                 if pending_items:
                     for item in pending_items:
-                        copy_string += f"  [ ] {item}\n"
+                        copy_text += f"  - [ ] {item}\n"
                 else:
-                    copy_string += "  (None)\n"
+                    copy_text += "  (None)\n"
                 
-                copy_string += "\n✅ COMPLETED ITEMS:\n"
+                copy_text += "\n✅ COMPLETED ITEMS:\n"
                 if completed_items:
                     for item in completed_items:
-                        copy_string += f"  [x] {item}\n"
+                        copy_text += f"  - [x] {item}\n"
                 else:
-                    copy_string += "  (None)\n"
+                    copy_text += "  (None)\n"
                 
-                # Native, optimized one-click copy module injection
-                st.copy_to_clipboard(copy_string)
+                # Append native Streamlit copy button widget
+                st.copy_to_clipboard(copy_text)
