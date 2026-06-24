@@ -42,7 +42,7 @@ def create_auth_page():
                         st.error("This username is already taken.")
 
 def create_main_page():
-    # FIXED: Intercept parameter injection events to dynamically update checklist array
+    # Intercept parameter injection events to dynamically update checklist array
     if "add_todo" in st.query_params:
         todo_task = st.query_params["add_todo"]
         if todo_task and not any(item["text"] == todo_task for item in st.session_state.checklist):
@@ -126,7 +126,7 @@ def create_main_page():
         weather_bento_html = f"<div class='ios-bento'><p class='bento-tag'>🌤 Weather Report</p>{weather_content}</div>".replace("\n", "").replace("\r", "")
         st.markdown(weather_bento_html, unsafe_allow_html=True)
 
-    # Right Panel: TripAdvisor Travel Advice Separated Sections[cite: 2]
+    # Right Panel: TripAdvisor Travel Advice Separated Sections
     with right_panel:
         if "tripadvisor_cache" in st.session_state and st.session_state.tripadvisor_cache:
             cache_data = st.session_state.tripadvisor_cache
@@ -134,7 +134,7 @@ def create_main_page():
             overview_item = cache_data[0] if len(cache_data) > 0 else None
             hotel_items = cache_data[1:5] if len(cache_data) > 1 else []
             
-            # --- SECTION 1: DESTINATION OVERVIEW BENTO ---[cite: 2, 3]
+            # --- SECTION 1: DESTINATION OVERVIEW BENTO ---
             if overview_item:
                 raw_title = overview_item.get('title', overview_item.get('name', 'Overview Context'))
                 title = raw_title.replace("'", "&#39;").replace('"', '&quot;').strip()
@@ -165,7 +165,7 @@ def create_main_page():
                 overview_bento_html = f"<div class='ios-bento'><p class='bento-tag'>✨ Destination Overview</p>{overview_html}</div>".replace("\n", "").replace("\r", "")
                 st.markdown(overview_bento_html, unsafe_allow_html=True)
             
-            # --- SECTION 2: HOTELS RECOMMENDATIONS BENTO ---[cite: 2, 3]
+            # --- SECTION 2: HOTELS RECOMMENDATIONS BENTO ---
             if hotel_items:
                 hotels_html = ""
                 for idx, item in enumerate(hotel_items, 1):
@@ -185,11 +185,9 @@ def create_main_page():
                     
                     item_border = "border-bottom: 1px solid rgba(142,142,147,0.15);" if idx < len(hotel_items) else ""
                     
-                    # FIXED: URL encode prefix directive context strings to prevent special characters breaking URL structures
                     todo_string = f"Book {title}"
                     encoded_todo = urllib.parse.quote(todo_string)
                     
-                    # FIXED: Added inline-flex row containing title + frosted translucent premium task insertion link
                     hotels_html += (
                         f"<div style='display: flex; gap: 16px; margin-bottom: 14px; padding-bottom: 14px; {item_border} align-items: flex-start;'>"
                         f"{img_tag}"
@@ -208,7 +206,7 @@ def create_main_page():
                 hotels_bento_html = f"<div class='ios-bento'><p class='bento-tag'>🏨 Hotels & Recommendations</p>{hotels_html}</div>".replace("\n", "").replace("\r", "")
                 st.markdown(hotels_bento_html, unsafe_allow_html=True)
                 
-        else:[cite: 2]
+        else:
             if "tripadvisor_cache" in st.session_state:
                 content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>No TripAdvisor travel entries found for this destination.</p>"
             else:
