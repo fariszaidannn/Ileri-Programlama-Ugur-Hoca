@@ -81,7 +81,8 @@ def create_main_page():
             st.rerun()
 
     # --- MAIN ENGINE VIEW ---
-    st.markdown("<h2 style='font-weight: 300; letter-spacing: -1px;'>Where are we heading?</h2>", unsafe_allow_html=True)
+    # FIXED: Changed font-weight to 700 to bold the heading section
+    st.markdown("<h2 style='font-weight: 700; letter-spacing: -1px;'>Where are we heading?</h2>", unsafe_allow_html=True)
     
     search_col, button_col = st.columns([4, 1])
     with search_col:
@@ -122,7 +123,6 @@ def create_main_page():
         if "tripadvisor_cache" in st.session_state and st.session_state.tripadvisor_cache:
             advice_html = ""
             for idx, item in enumerate(st.session_state.tripadvisor_cache[:5], 1):
-                # Defensive lookup: TripAdvisor items can use 'title' or 'name'
                 raw_title = item.get('title', item.get('name', 'Premium Location'))
                 title = raw_title.replace("'", "&#39;").replace('"', '&quot;').strip()
                 
@@ -130,16 +130,16 @@ def create_main_page():
                 rating = item.get('rating', 'N/A')
                 reviews = item.get('reviews', 0)
                 
-                # Check for description or fallback snippet if available
                 description = item.get('description', item.get('snippet', ''))
                 description = description.replace("'", "&#39;").replace('"', '&quot;').strip()
                 
-                desc_snippet = f"<p style='font-size:13px; color:#cccccc; margin:4px 0 0 0; line-height:1.4;'>{description}</p>" if description else ""
+                # FIXED: Removed color:#cccccc, increased font size, added text-align: justify, and applied 0.85 opacity for high-contrast readability
+                desc_snippet = f"<p style='font-size:14px; text-align: justify; margin:6px 0 0 0; line-height:1.5; opacity: 0.85;'>{description}</p>" if description else ""
                 
                 advice_html += (
                     f"<div style='margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid rgba(142,142,147,0.15);'>"
                     f"<a href='{url}' style='text-decoration:none; color:inherit;' target='_blank'>"
-                    f"<h5 style='font-weight:500; margin:0 0 3px 0; font-size:15px; color:#007AFF;'>{title}</h5>"
+                    f"<h5 style='font-weight:600; margin:0 0 3px 0; font-size:16px; color:#007AFF;'>{title}</h5>"
                     f"</a>"
                     f"<p style='font-size:11px; color:#8e8e93; margin:0;'>⭐ {rating} ({reviews} reviews) • Recommendation #{idx}</p>"
                     f"{desc_snippet}"
