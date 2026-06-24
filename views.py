@@ -1,5 +1,6 @@
 # views.py
 import streamlit as st
+import urllib.parse
 from database import Database
 
 def create_auth_page():
@@ -41,6 +42,14 @@ def create_auth_page():
                         st.error("This username is already taken.")
 
 def create_main_page():
+    # FIXED: Intercept parameter injection events to dynamically update checklist array
+    if "add_todo" in st.query_params:
+        todo_task = st.query_params["add_todo"]
+        if todo_task and not any(item["text"] == todo_task for item in st.session_state.checklist):
+            st.session_state.checklist.append({"text": todo_task, "checked": False})
+        st.query_params.clear()
+        st.rerun()
+
     # --- MINIMAL SIDEBAR (Checklist Layout) ---
     with st.sidebar:
         st.markdown("<h3 style='font-weight: 400; letter-spacing: -0.5px;'>Trip Checklist</h3>", unsafe_allow_html=True)
@@ -122,7 +131,6 @@ def create_main_page():
         if "tripadvisor_cache" in st.session_state and st.session_state.tripadvisor_cache:
             cache_data = st.session_state.tripadvisor_cache
             
-            # Segmenting Data: Extract Recommendation #1 as Overview, rest as lodging selections[cite: 2]
             overview_item = cache_data[0] if len(cache_data) > 0 else None
             hotel_items = cache_data[1:5] if len(cache_data) > 1 else []
             
@@ -175,16 +183,23 @@ def create_main_page():
                     thumb_url = thumb.get('link', '') if isinstance(thumb, dict) else thumb
                     img_tag = f"<img src='{thumb_url}' style='width: 85px; height: 85px; object-fit: cover; border-radius: 12px; flex-shrink: 0; margin-top: 3px;' />" if thumb_url else ""
                     
-                    # Add bottom border styling line to separate items neatly
                     item_border = "border-bottom: 1px solid rgba(142,142,147,0.15);" if idx < len(hotel_items) else ""
                     
+                    # FIXED: URL encode prefix directive context strings to prevent special characters breaking URL structures
+                    todo_string = f"Book {title}"
+                    encoded_todo = urllib.parse.quote(todo_string)
+                    
+                    # FIXED: Added inline-flex row containing title + frosted translucent premium task insertion link
                     hotels_html += (
                         f"<div style='display: flex; gap: 16px; margin-bottom: 14px; padding-bottom: 14px; {item_border} align-items: flex-start;'>"
                         f"{img_tag}"
                         f"<div style='flex-grow: 1; min-width: 0;'>"
+                        f"<div style='display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 3px;'>"
                         f"<a href='{url}' style='text-decoration:none; color:inherit;' target='_blank'>"
-                        f"<h5 style='font-weight:600; margin:0 0 3px 0; font-size:16px; color:#007AFF;'>{title}</h5>"
+                        f"<h5 style='font-weight:600; margin:0; font-size:16px; color:#007AFF;'>{title}</h5>"
                         f"</a>"
+                        f"<a href='?add_todo={encoded_todo}' target='_self' style='text-decoration:none; font-size:11px; background: rgba(0,122,255,0.12); padding: 3px 8px; border-radius: 7px; color: #007AFF; font-weight:600; display:inline-flex; align-items:center; gap:3px;' title='Add to Trip Checklist'>➕ Add</a>"
+                        f"</div>"
                         f"<p style='font-size:11px; color:#8e8e93; margin:0;'>⭐ {rating} ({reviews} reviews) • Option #{idx}</p>"
                         f"{desc_snippet}"
                         f"</div>"
@@ -193,8 +208,7 @@ def create_main_page():
                 hotels_bento_html = f"<div class='ios-bento'><p class='bento-tag'>🏨 Hotels & Recommendations</p>{hotels_html}</div>".replace("\n", "").replace("\r", "")
                 st.markdown(hotels_bento_html, unsafe_allow_html=True)
                 
-        else:
-            # Fallback placeholder containers[cite: 2]
+        else:[cite: 2]
             if "tripadvisor_cache" in st.session_state:
                 content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>No TripAdvisor travel entries found for this destination.</p>"
             else:
