@@ -120,7 +120,7 @@ def create_main_page():
         weather_bento_html = f"<div class='ios-bento'><p class='bento-tag'>🌤 Weather Report</p>{weather_content}</div>".replace("\n", "").replace("\r", "")
         st.markdown(weather_bento_html, unsafe_allow_html=True)
 
-        # Box 2: Google Images Light Destination Highlights Box (Completely Decoupled)
+        # Box 2: Google Images Light - Destinations/Ideas Box
         if "images_light_cache" in st.session_state and st.session_state.images_light_cache:
             current_city = st.session_state.get("city_search_val", "Destination")
             images_html = ""
@@ -162,7 +162,7 @@ def create_main_page():
             fallback_text = "No local highlight items discovered." if "images_light_cache" in st.session_state else "Awaiting destination choice..."
             images_content = f"<p style='color:#8e8e93;font-size:14px;margin:0;'>{fallback_text}</p>"
             
-        images_bento_html = f"<div class='ios-bento'><p class='bento-tag'>📸 Destination Highlights</p>{images_content}</div>".replace("\n", "").replace("\r", "")
+        images_bento_html = f"<div class='ios-bento'><p class='bento-tag'>📸 Destinations/Ideas</p>{images_content}</div>".replace("\n", "").replace("\r", "")
         st.markdown(images_bento_html, unsafe_allow_html=True)
 
     # ==================== RIGHT PANEL ====================
