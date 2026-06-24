@@ -244,4 +244,66 @@ def create_history_page():
     sort_option = st.selectbox("Order Sequence Filter", ["Newest First", "Oldest First", "Alphabetical (A → Z)"], label_visibility="collapsed")
     sort_mapping = {"Newest First": "newest", "Oldest First": "oldest", "Alphabetical (A → Z)": "atoz"}
     
-    sorted_trips
+    sorted_trips = Database.load_trips(st.session_state.logged_in_user_id, sort_mapping[sort_option])
+    st.markdown("<div style='margin: 15px 0;'></div>", unsafe_allow_html=True)
+
+    if not sorted_trips:
+        st.info("No logs present inside this profile catalog yet.")
+        return
+
+    cols = st.columns(2)
+    for idx, (trip_id, city) in enumerate(sorted_trips):
+        with cols[idx % 2]:
+            with st.container(border=True):
+                card_head_left, card_head_right = st.columns([5, 1])
+                card_head_left.markdown(f"<h4 style='font-weight: 400; margin: 0;'>{city.title()}</h4>", unsafe_allow_html=True)
+                
+                if card_head_right.button("✕", key=f"del_{trip_id}", help="Delete log"):
+                    Database.delete_trip(trip_id)
+                    st.rerun()
+                
+                st.markdown("<div style='margin: 8px 0;'></div>", unsafe_allow_html=True)
+                st.markdown("<p style='font-size: 11px; text-transform: uppercase; color: #888888; margin-bottom: 2px;'>Weather Capture</p>", unsafe_allow_html=True)
+                
+                weather_str = Database.fetch_weather(city).replace('\n', '  |  ')
+                st.markdown(f"<p style='font-size: 13px; color: #cccccc;'>{weather_str}</p>", unsafe_allow_html=True)
+                st.markdown("<div style='margin: 8px 0;'></div>", unsafe_allow_html=True)
+                
+                items = Database.load_items(trip_id)
+                pending_items = [item_text for item_text, checked in items if not checked]
+                completed_items = [item_text for item_text, checked in items if checked]
+                
+                if pending_items:
+                    st.markdown("<p style='font-size: 11px; text-transform: uppercase; color: #ffbc00; margin-bottom: 4px;'>⏳ Remaining Tasks</p>", unsafe_allow_html=True)
+                    for item_text in pending_items:
+                        st.markdown(f"<p style='font-size: 13px; margin: 2px 0; color: #ffffff;'>◦ {item_text}</p>", unsafe_allow_html=True)
+                
+                if completed_items:
+                    if pending_items:
+                        st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)
+                    st.markdown("<p style='font-size: 11px; text-transform: uppercase; color: #00fa9a; margin-bottom: 4px;'>✅ Completed Tasks</p>", unsafe_allow_html=True)
+                    for item_text in completed_items:
+                        st.markdown(f"<p style='font-size: 13px; margin: 2px 0; text-decoration: line-through; color: #666666;'>• {item_text}</p>", unsafe_allow_html=True)
+                
+                if not items:
+                    st.caption("Zero tasks assigned to this itinerary registry index.")
+                
+                st.markdown("<div style='margin-top: 14px;'></div>", unsafe_allow_html=True)
+                
+                copy_text = f"📌 SEYAHATIFY TRAVEL PACK: {city.title()}\n"
+                copy_text += f"🌤️ Weather Profile: {weather_str}\n\n"
+                copy_text += "⏳ REMAINING TO-DO ITEMS:\n"
+                if pending_items:
+                    for item in pending_items:
+                        copy_text += f"  - [ ] {item}\n"
+                else:
+                    copy_text += "  (None)\n"
+                
+                copy_text += "\n✅ COMPLETED ITEMS:\n"
+                if completed_items:
+                    for item in completed_items:
+                        copy_text += f"  - [x] {item}\n"
+                else:
+                    copy_text += "  (None)\n"
+                
+                st.code(copy_text, language=None)
