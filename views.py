@@ -122,11 +122,17 @@ def create_main_page():
         if "tripadvisor_cache" in st.session_state and st.session_state.tripadvisor_cache:
             advice_html = ""
             for idx, item in enumerate(st.session_state.tripadvisor_cache[:5], 1):
-                title = item.get('title', 'Premium Location').replace("'", "&#39;").replace('"', '&quot;').strip()
+                # Defensive lookup: TripAdvisor items can use 'title' or 'name'
+                raw_title = item.get('title', item.get('name', 'Premium Location'))
+                title = raw_title.replace("'", "&#39;").replace('"', '&quot;').strip()
+                
                 url = item.get('link', '#')
                 rating = item.get('rating', 'N/A')
                 reviews = item.get('reviews', 0)
-                description = item.get('description', '').replace("'", "&#39;").replace('"', '&quot;').strip()
+                
+                # Check for description or fallback snippet if available
+                description = item.get('description', item.get('snippet', ''))
+                description = description.replace("'", "&#39;").replace('"', '&quot;').strip()
                 
                 desc_snippet = f"<p style='font-size:13px; color:#cccccc; margin:4px 0 0 0; line-height:1.4;'>{description}</p>" if description else ""
                 
