@@ -177,3 +177,15 @@ class Database:
         except Exception:
             pass
         return []
+
+    @staticmethod
+    def fetch_images_light(city):
+        """Calls SerpApi Google Images Light API using secure Streamlit secrets."""
+        try:
+            api_key = st.secrets["SERPAPI_API_KEY"]
+            url = f"https://serpapi.com/search.json?engine=google_images_light&q={city}+travel&api_key={api_key}"
+            data = requests.get(url, timeout=5).json()
+            return data.get("images_results", [])
+        except Exception:
+            pass
+        return []
