@@ -117,50 +117,91 @@ def create_main_page():
         weather_bento_html = f"<div class='ios-bento'><p class='bento-tag'>🌤 Weather Report</p>{weather_content}</div>".replace("\n", "").replace("\r", "")
         st.markdown(weather_bento_html, unsafe_allow_html=True)
 
-    # Right Panel: TripAdvisor Travel Advice Bento Box (iOS UI Styling)
+    # Right Panel: TripAdvisor Travel Advice Separated Sections[cite: 2]
     with right_panel:
         if "tripadvisor_cache" in st.session_state and st.session_state.tripadvisor_cache:
-            advice_html = ""
-            for idx, item in enumerate(st.session_state.tripadvisor_cache[:5], 1):
-                raw_title = item.get('title', item.get('name', 'Premium Location'))
+            cache_data = st.session_state.tripadvisor_cache
+            
+            # Segmenting Data: Extract Recommendation #1 as Overview, rest as lodging selections[cite: 2]
+            overview_item = cache_data[0] if len(cache_data) > 0 else None
+            hotel_items = cache_data[1:5] if len(cache_data) > 1 else []
+            
+            # --- SECTION 1: DESTINATION OVERVIEW BENTO ---[cite: 2, 3]
+            if overview_item:
+                raw_title = overview_item.get('title', overview_item.get('name', 'Overview Context'))
                 title = raw_title.replace("'", "&#39;").replace('"', '&quot;').strip()
-                
-                url = item.get('link', '#')
-                rating = item.get('rating', 'N/A')
-                reviews = item.get('reviews', 0)
-                
-                description = item.get('description', item.get('snippet', ''))
+                url = overview_item.get('link', '#')
+                rating = overview_item.get('rating', 'N/A')
+                reviews = overview_item.get('reviews', 0)
+                description = overview_item.get('description', overview_item.get('snippet', ''))
                 description = description.replace("'", "&#39;").replace('"', '&quot;').strip()
                 
                 desc_snippet = f"<p style='font-size:14px; text-align: justify; margin:6px 0 0 0; line-height:1.5; opacity: 0.85;'>{description}</p>" if description else ""
                 
-                # Dynamic Image Handler: Safely parses string URLs or dictionary object configurations
-                thumb = item.get('thumbnail', '')
+                thumb = overview_item.get('thumbnail', '')
                 thumb_url = thumb.get('link', '') if isinstance(thumb, dict) else thumb
-                
-                # Premium aspect-ratio cropped iOS image card component layout
                 img_tag = f"<img src='{thumb_url}' style='width: 85px; height: 85px; object-fit: cover; border-radius: 12px; flex-shrink: 0; margin-top: 3px;' />" if thumb_url else ""
                 
-                advice_html += (
-                    f"<div style='display: flex; gap: 16px; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid rgba(142,142,147,0.15); align-items: flex-start;'>"
+                overview_html = (
+                    f"<div style='display: flex; gap: 16px; align-items: flex-start;'>"
                     f"{img_tag}"
                     f"<div style='flex-grow: 1; min-width: 0;'>"
                     f"<a href='{url}' style='text-decoration:none; color:inherit;' target='_blank'>"
                     f"<h5 style='font-weight:600; margin:0 0 3px 0; font-size:16px; color:#007AFF;'>{title}</h5>"
                     f"</a>"
-                    f"<p style='font-size:11px; color:#8e8e93; margin:0;'>⭐ {rating} ({reviews} reviews) • Recommendation #{idx}</p>"
+                    f"<p style='font-size:11px; color:#8e8e93; margin:0;'>⭐ {rating} ({reviews} reviews)</p>"
                     f"{desc_snippet}"
                     f"</div>"
                     f"</div>"
                 )
-            advice_content = f"<div style='margin-top:6px;'>{advice_html}</div>"
-        elif "tripadvisor_cache" in st.session_state:
-            advice_content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>No TripAdvisor travel entries found for this destination.</p>"
+                overview_bento_html = f"<div class='ios-bento'><p class='bento-tag'>✨ Destination Overview</p>{overview_html}</div>".replace("\n", "").replace("\r", "")
+                st.markdown(overview_bento_html, unsafe_allow_html=True)
+            
+            # --- SECTION 2: HOTELS RECOMMENDATIONS BENTO ---[cite: 2, 3]
+            if hotel_items:
+                hotels_html = ""
+                for idx, item in enumerate(hotel_items, 1):
+                    raw_title = item.get('title', item.get('name', 'Recommended Lodging'))
+                    title = raw_title.replace("'", "&#39;").replace('"', '&quot;').strip()
+                    url = item.get('link', '#')
+                    rating = item.get('rating', 'N/A')
+                    reviews = item.get('reviews', 0)
+                    description = item.get('description', item.get('snippet', ''))
+                    description = description.replace("'", "&#39;").replace('"', '&quot;').strip()
+                    
+                    desc_snippet = f"<p style='font-size:14px; text-align: justify; margin:6px 0 0 0; line-height:1.5; opacity: 0.85;'>{description}</p>" if description else ""
+                    
+                    thumb = item.get('thumbnail', '')
+                    thumb_url = thumb.get('link', '') if isinstance(thumb, dict) else thumb
+                    img_tag = f"<img src='{thumb_url}' style='width: 85px; height: 85px; object-fit: cover; border-radius: 12px; flex-shrink: 0; margin-top: 3px;' />" if thumb_url else ""
+                    
+                    # Add bottom border styling line to separate items neatly
+                    item_border = "border-bottom: 1px solid rgba(142,142,147,0.15);" if idx < len(hotel_items) else ""
+                    
+                    hotels_html += (
+                        f"<div style='display: flex; gap: 16px; margin-bottom: 14px; padding-bottom: 14px; {item_border} align-items: flex-start;'>"
+                        f"{img_tag}"
+                        f"<div style='flex-grow: 1; min-width: 0;'>"
+                        f"<a href='{url}' style='text-decoration:none; color:inherit;' target='_blank'>"
+                        f"<h5 style='font-weight:600; margin:0 0 3px 0; font-size:16px; color:#007AFF;'>{title}</h5>"
+                        f"</a>"
+                        f"<p style='font-size:11px; color:#8e8e93; margin:0;'>⭐ {rating} ({reviews} reviews) • Option #{idx}</p>"
+                        f"{desc_snippet}"
+                        f"</div>"
+                        f"</div>"
+                    )
+                hotels_bento_html = f"<div class='ios-bento'><p class='bento-tag'>🏨 Hotels & Recommendations</p>{hotels_html}</div>".replace("\n", "").replace("\r", "")
+                st.markdown(hotels_bento_html, unsafe_allow_html=True)
+                
         else:
-            advice_content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>Awaiting destination choice...</p>"
-
-        tripadvisor_bento_html = f"<div class='ios-bento'><p class='bento-tag'>🧳 TripAdvisor Travel Advice</p>{advice_content}</div>".replace("\n", "").replace("\r", "")
-        st.markdown(tripadvisor_bento_html, unsafe_allow_html=True)
+            # Fallback placeholder containers[cite: 2]
+            if "tripadvisor_cache" in st.session_state:
+                content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>No TripAdvisor travel entries found for this destination.</p>"
+            else:
+                content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>Awaiting destination choice...</p>"
+            
+            fallback_bento_html = f"<div class='ios-bento'><p class='bento-tag'>🧳 TripAdvisor Travel Advice</p>{content}</div>".replace("\n", "").replace("\r", "")
+            st.markdown(fallback_bento_html, unsafe_allow_html=True)
 
 def create_history_page():
     top_col1, top_col2 = st.columns([4, 1])
