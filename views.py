@@ -81,7 +81,6 @@ def create_main_page():
             st.rerun()
 
     # --- MAIN ENGINE VIEW ---
-    # FIXED: Changed font-weight to 700 to bold the heading section
     st.markdown("<h2 style='font-weight: 700; letter-spacing: -1px;'>Where are we heading?</h2>", unsafe_allow_html=True)
     
     search_col, button_col = st.columns([4, 1])
@@ -133,16 +132,25 @@ def create_main_page():
                 description = item.get('description', item.get('snippet', ''))
                 description = description.replace("'", "&#39;").replace('"', '&quot;').strip()
                 
-                # FIXED: Removed color:#cccccc, increased font size, added text-align: justify, and applied 0.85 opacity for high-contrast readability
                 desc_snippet = f"<p style='font-size:14px; text-align: justify; margin:6px 0 0 0; line-height:1.5; opacity: 0.85;'>{description}</p>" if description else ""
                 
+                # Dynamic Image Handler: Safely parses string URLs or dictionary object configurations
+                thumb = item.get('thumbnail', '')
+                thumb_url = thumb.get('link', '') if isinstance(thumb, dict) else thumb
+                
+                # Premium aspect-ratio cropped iOS image card component layout
+                img_tag = f"<img src='{thumb_url}' style='width: 85px; height: 85px; object-fit: cover; border-radius: 12px; flex-shrink: 0; margin-top: 3px;' />" if thumb_url else ""
+                
                 advice_html += (
-                    f"<div style='margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid rgba(142,142,147,0.15);'>"
+                    f"<div style='display: flex; gap: 16px; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid rgba(142,142,147,0.15); align-items: flex-start;'>"
+                    f"{img_tag}"
+                    f"<div style='flex-grow: 1; min-width: 0;'>"
                     f"<a href='{url}' style='text-decoration:none; color:inherit;' target='_blank'>"
                     f"<h5 style='font-weight:600; margin:0 0 3px 0; font-size:16px; color:#007AFF;'>{title}</h5>"
                     f"</a>"
                     f"<p style='font-size:11px; color:#8e8e93; margin:0;'>⭐ {rating} ({reviews} reviews) • Recommendation #{idx}</p>"
                     f"{desc_snippet}"
+                    f"</div>"
                     f"</div>"
                 )
             advice_content = f"<div style='margin-top:6px;'>{advice_html}</div>"
