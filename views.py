@@ -104,9 +104,9 @@ def create_main_page():
     
     left_panel, right_panel = st.columns([2, 3])
 
-    # Left Panel: Weather Summary & Google Images Light Bento Boxes
+    # ==================== LEFT PANEL ====================
     with left_panel:
-        # 1. Weather Summary Box
+        # Box 1: Weather Summary Box
         if "weather_cache" in st.session_state:
             if "⚠" in st.session_state.weather_cache:
                 weather_content = f"<p style='color:#ff4b4b;margin:0;'>{st.session_state.weather_cache}</p>"
@@ -120,7 +120,7 @@ def create_main_page():
         weather_bento_html = f"<div class='ios-bento'><p class='bento-tag'>🌤 Weather Report</p>{weather_content}</div>".replace("\n", "").replace("\r", "")
         st.markdown(weather_bento_html, unsafe_allow_html=True)
 
-        # 2. Google Images Light Destination Highlights Box
+        # Box 2: Google Images Light Destination Highlights Box (Completely Decoupled)
         if "images_light_cache" in st.session_state and st.session_state.images_light_cache:
             current_city = st.session_state.get("city_search_val", "Destination")
             images_html = ""
@@ -130,11 +130,9 @@ def create_main_page():
                 thumb_url = item.get('thumbnail', '')
                 source = item.get('source', 'Web Discovery')
                 
-                # Safe context string parameter encoders
                 encoded_url = urllib.parse.quote(url)
                 encoded_title = urllib.parse.quote(f"Take a look at this destination highlight from {current_city.title()}: {title}")
                 
-                # Standard web safe direct social media popup endpoints
                 share_fb = f"https://www.facebook.com/sharer/sharer.php?u={encoded_url}"
                 share_tw = f"https://twitter.com/intent/tweet?url={encoded_url}&text={encoded_title}"
                 share_wa = f"https://api.whatsapp.com/send?text={encoded_title}%20{encoded_url}"
@@ -159,26 +157,22 @@ def create_main_page():
                     f"</div>"
                     f"</div>"
                 )
-            images_bento_html = f"<div class='ios-bento'><p class='bento-tag'>📸 Destination Highlights</p>{images_html}</div>".replace("\n", "").replace("\r", "")
-            st.markdown(images_bento_html, unsafe_allow_html=True)
+            images_content = images_html
         else:
-            if "tripadvisor_cache" in st.session_state:
-                content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>No local highlight items discovered.</p>"
-            else:
-                content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>Awaiting destination choice...</p>"
+            fallback_text = "No local highlight items discovered." if "images_light_cache" in st.session_state else "Awaiting destination choice..."
+            images_content = f"<p style='color:#8e8e93;font-size:14px;margin:0;'>{fallback_text}</p>"
             
-            images_fallback_html = f"<div class='ios-bento'><p class='bento-tag'>📸 Destination Highlights</p>{content}</div>".replace("\n", "").replace("\r", "")
-            st.markdown(images_fallback_html, unsafe_allow_html=True)
+        images_bento_html = f"<div class='ios-bento'><p class='bento-tag'>📸 Destination Highlights</p>{images_content}</div>".replace("\n", "").replace("\r", "")
+        st.markdown(images_bento_html, unsafe_allow_html=True)
 
-    # Right Panel: TripAdvisor Travel Advice Separated Sections
+    # ==================== RIGHT PANEL ====================
     with right_panel:
         if "tripadvisor_cache" in st.session_state and st.session_state.tripadvisor_cache:
             cache_data = st.session_state.tripadvisor_cache
-            
             overview_item = cache_data[0] if len(cache_data) > 0 else None
             hotel_items = cache_data[1:5] if len(cache_data) > 1 else []
             
-            # --- SECTION 1: DESTINATION OVERVIEW BENTO ---
+            # Box 3: Destination Overview (Filled)
             if overview_item:
                 raw_title = overview_item.get('title', overview_item.get('name', 'Overview Context'))
                 title = raw_title.replace("'", "&#39;").replace('"', '&quot;').strip()
@@ -187,7 +181,6 @@ def create_main_page():
                 reviews = overview_item.get('reviews', 0)
                 description = overview_item.get('description', overview_item.get('snippet', ''))
                 description = description.replace("'", "&#39;").replace('"', '&quot;').strip()
-                
                 desc_snippet = f"<p style='font-size:14px; text-align: justify; margin:6px 0 0 0; line-height:1.5; opacity: 0.85;'>{description}</p>" if description else ""
                 
                 thumb = overview_item.get('thumbnail', '')
@@ -209,7 +202,7 @@ def create_main_page():
                 overview_bento_html = f"<div class='ios-bento'><p class='bento-tag'>✨ Destination Overview</p>{overview_html}</div>".replace("\n", "").replace("\r", "")
                 st.markdown(overview_bento_html, unsafe_allow_html=True)
             
-            # --- SECTION 2: HOTELS RECOMMENDATIONS BENTO ---
+            # Box 4: Hotels & Recommendations (Filled)
             if hotel_items:
                 hotels_html = ""
                 for idx, item in enumerate(hotel_items, 1):
@@ -220,13 +213,11 @@ def create_main_page():
                     reviews = item.get('reviews', 0)
                     description = item.get('description', item.get('snippet', ''))
                     description = description.replace("'", "&#39;").replace('"', '&quot;').strip()
-                    
                     desc_snippet = f"<p style='font-size:14px; text-align: justify; margin:6px 0 0 0; line-height:1.5; opacity: 0.85;'>{description}</p>" if description else ""
                     
                     thumb = item.get('thumbnail', '')
                     thumb_url = thumb.get('link', '') if isinstance(thumb, dict) else thumb
                     img_tag = f"<img src='{thumb_url}' style='width: 85px; height: 85px; object-fit: cover; border-radius: 12px; flex-shrink: 0; margin-top: 3px;' />" if thumb_url else ""
-                    
                     item_border = "border-bottom: 1px solid rgba(142,142,147,0.15);" if idx < len(hotel_items) else ""
                     
                     hotels_html += (
@@ -245,10 +236,9 @@ def create_main_page():
                 st.markdown(hotels_bento_html, unsafe_allow_html=True)
                 
         else:
-            if "tripadvisor_cache" in st.session_state:
-                content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>No travel data found for this destination.</p>"
-            else:
-                content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>Awaiting destination choice...</p>"
+            # Box 3 & 4 Fixed Placeholders (Visible on application startup)
+            fallback_text = "No travel data found for this destination." if "tripadvisor_cache" in st.session_state else "Awaiting destination choice..."
+            content = f"<p style='color:#8e8e93;font-size:14px;margin:0;'>{fallback_text}</p>"
             
             overview_fallback_html = f"<div class='ios-bento'><p class='bento-tag'>✨ Destination Overview</p>{content}</div>".replace("\n", "").replace("\r", "")
             st.markdown(overview_fallback_html, unsafe_allow_html=True)
