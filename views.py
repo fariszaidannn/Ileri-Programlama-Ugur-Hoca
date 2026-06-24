@@ -46,7 +46,7 @@ def create_main_page():
     # Inject CSS to completely hide the background communication input box
     st.markdown("""
         <style>
-        div[data-testid="stElementContainer"]:has(input[aria-label="hidden_action"]) {
+        div[data-testid="stElementContainer"]:has(input[placeholder="hidden_action_trigger"]) {
             display: none !important;
             height: 0 !important;
             margin: 0 !important;
@@ -55,8 +55,8 @@ def create_main_page():
         </style>
     """, unsafe_allow_html=True)
     
-    # Render hidden native input box to intercept JavaScript clicks instantaneously
-    hidden_action = st.text_input("hidden_action", key="hidden_action_input", label_visibility="collapsed")
+    # FIXED: Replaced aria-label filtering with absolute placeholder matching for robust cross-browser DOM lookups
+    hidden_action = st.text_input("hidden_action", placeholder="hidden_action_trigger", key="hidden_action_input", label_visibility="collapsed")
     
     if hidden_action:
         if not any(item["text"] == hidden_action for item in st.session_state.checklist):
@@ -169,7 +169,7 @@ def create_main_page():
                     f"{img_tag}"
                     f"<div style='flex-grow: 1; min-width: 0;'>"
                     f"<a href='{url}' style='text-decoration:none; color:inherit;' target='_blank'>"
-                    f"<h5 style='font-weight:600; margin:0 0 3px 0; font-size:16px; color:#007AFF;'>{title}</h5>"
+                    f"<h4 style='font-weight:600; margin:0 0 3px 0; font-size:16px; color:#007AFF;'>{title}</h4>"
                     f"</a>"
                     f"<p style='font-size:11px; color:#8e8e93; margin:0;'>⭐ {rating} ({reviews} reviews)</p>"
                     f"{desc_snippet}"
@@ -199,10 +199,9 @@ def create_main_page():
                     
                     item_border = "border-bottom: 1px solid rgba(142,142,147,0.15);" if idx < len(hotel_items) else ""
                     
-                    # Escape quotes safely for JavaScript string initialization literals
                     js_safe_title = title.replace("'", "\\'").replace('"', '\\"')
                     
-                    # FIXED: Changed from anchor href parameter changes to an inline javascript trigger execution element
+                    # FIXED: Added React prototype Native Setter configuration via vanilla Javascript to cleanly pass inputs into Streamlit websocket handlers
                     hotels_html += (
                         f"<div style='display: flex; gap: 16px; margin-bottom: 14px; padding-bottom: 14px; {item_border} align-items: flex-start;'>"
                         f"{img_tag}"
@@ -211,7 +210,7 @@ def create_main_page():
                         f"<a href='{url}' style='text-decoration:none; color:inherit;' target='_blank'>"
                         f"<h5 style='font-weight:600; margin:0; font-size:16px; color:#007AFF;'>{title}</h5>"
                         f"</a>"
-                        f"<button onclick=\"const el = window.parent.document.querySelector('input[aria-label=\\'hidden_action\\']') || document.querySelector('input[aria-label=\\'hidden_action\\']'); if (el) {{ el.value = 'Book {js_safe_title}'; el.dispatchEvent(new Event('input', {{ bubbles: true }})); el.dispatchEvent(new Event('change', {{ bubbles: true }})); }}\" style='cursor:pointer; border:none; font-size:11px; background: rgba(0,122,255,0.12); padding: 3px 8px; border-radius: 7px; color: #007AFF; font-weight:600; display:inline-flex; align-items:center; gap:3px;' title='Add to Trip Checklist'>➕ Add</button>"
+                        f"<button onclick='const el = document.querySelector(\"input[placeholder=\\\"hidden_action\\\"]\") || document.querySelector(\"input[placeholder=\\\"hidden_action_trigger\\\"]\"); if (el) {{ const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, \"value\").set; setter.call(el, \"Book {js_safe_title}\"); el.dispatchEvent(new Event(\"input\", {{ bubbles: true }})); }}' style='cursor:pointer; border:none; font-size:11px; background: rgba(0,122,255,0.12); padding: 3px 8px; border-radius: 7px; color: #007AFF; font-weight:600; display:inline-flex; align-items:center; gap:3px;' title='Add to Trip Checklist'>➕ Add</button>"
                         f"</div>"
                         f"<p style='font-size:11px; color:#8e8e93; margin:0;'>⭐ {rating} ({reviews} reviews) • Option #{idx}</p>"
                         f"{desc_snippet}"
@@ -245,66 +244,4 @@ def create_history_page():
     sort_option = st.selectbox("Order Sequence Filter", ["Newest First", "Oldest First", "Alphabetical (A → Z)"], label_visibility="collapsed")
     sort_mapping = {"Newest First": "newest", "Oldest First": "oldest", "Alphabetical (A → Z)": "atoz"}
     
-    sorted_trips = Database.load_trips(st.session_state.logged_in_user_id, sort_mapping[sort_option])
-    st.markdown("<div style='margin: 15px 0;'></div>", unsafe_allow_html=True)
-
-    if not sorted_trips:
-        st.info("No logs present inside this profile catalog yet.")
-        return
-
-    cols = st.columns(2)
-    for idx, (trip_id, city) in enumerate(sorted_trips):
-        with cols[idx % 2]:
-            with st.container(border=True):
-                card_head_left, card_head_right = st.columns([5, 1])
-                card_head_left.markdown(f"<h4 style='font-weight: 400; margin: 0;'>{city.title()}</h4>", unsafe_allow_html=True)
-                
-                if card_head_right.button("✕", key=f"del_{trip_id}", help="Delete log"):
-                    Database.delete_trip(trip_id)
-                    st.rerun()
-                
-                st.markdown("<div style='margin: 8px 0;'></div>", unsafe_allow_html=True)
-                st.markdown("<p style='font-size: 11px; text-transform: uppercase; color: #888888; margin-bottom: 2px;'>Weather Capture</p>", unsafe_allow_html=True)
-                
-                weather_str = Database.fetch_weather(city).replace('\n', '  |  ')
-                st.markdown(f"<p style='font-size: 13px; color: #cccccc;'>{weather_str}</p>", unsafe_allow_html=True)
-                st.markdown("<div style='margin: 8px 0;'></div>", unsafe_allow_html=True)
-                
-                items = Database.load_items(trip_id)
-                pending_items = [item_text for item_text, checked in items if not checked]
-                completed_items = [item_text for item_text, checked in items if checked]
-                
-                if pending_items:
-                    st.markdown("<p style='font-size: 11px; text-transform: uppercase; color: #ffbc00; margin-bottom: 4px;'>⏳ Remaining Tasks</p>", unsafe_allow_html=True)
-                    for item_text in pending_items:
-                        st.markdown(f"<p style='font-size: 13px; margin: 2px 0; color: #ffffff;'>◦ {item_text}</p>", unsafe_allow_html=True)
-                
-                if completed_items:
-                    if pending_items:
-                        st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)
-                    st.markdown("<p style='font-size: 11px; text-transform: uppercase; color: #00fa9a; margin-bottom: 4px;'>✅ Completed Tasks</p>", unsafe_allow_html=True)
-                    for item_text in completed_items:
-                        st.markdown(f"<p style='font-size: 13px; margin: 2px 0; text-decoration: line-through; color: #666666;'>• {item_text}</p>", unsafe_allow_html=True)
-                
-                if not items:
-                    st.caption("Zero tasks assigned to this itinerary registry index.")
-                
-                st.markdown("<div style='margin-top: 14px;'></div>", unsafe_allow_html=True)
-                
-                copy_text = f"📌 SEYAHATIFY TRAVEL PACK: {city.title()}\n"
-                copy_text += f"🌤️ Weather Profile: {weather_str}\n\n"
-                copy_text += "⏳ REMAINING TO-DO ITEMS:\n"
-                if pending_items:
-                    for item in pending_items:
-                        copy_text += f"  - [ ] {item}\n"
-                else:
-                    copy_text += "  (None)\n"
-                
-                copy_text += "\n✅ COMPLETED ITEMS:\n"
-                if completed_items:
-                    for item in completed_items:
-                        copy_text += f"  - [x] {item}\n"
-                else:
-                    copy_text += "  (None)\n"
-                
-                st.code(copy_text, language=None)
+    sorted_trips
