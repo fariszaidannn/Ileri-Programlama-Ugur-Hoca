@@ -3,15 +3,13 @@ import streamlit as st
 from database import Database
 
 def create_auth_page():
-    # Centered modern layout wrap
     _, center_col, _ = st.columns([1, 2, 1])
     
     with center_col:
         st.markdown("<h1 style='text-align: center; font-weight: 300; letter-spacing: -1px; color: #D4AF37;'>🧭 Seyahatify</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: #888888; font-size: 14px;'>Your minimalist travel companion</p>", unsafe_allow_html=True)
-        st.space = st.empty() # Generates structural whitespace
+        st.space = st.empty() 
         
-        # Sleek borderless card container
         with st.container(border=True):
             tab1, tab2 = st.tabs(["Sign In", "Register"])
             
@@ -47,7 +45,6 @@ def create_main_page():
     with st.sidebar:
         st.markdown("<h3 style='font-weight: 400; letter-spacing: -0.5px;'>Trip Checklist</h3>", unsafe_allow_html=True)
         
-        # Minimal input field inline placement
         new_todo = st.text_input("Add task item", key="todo_input", placeholder="Pack passport...")
         if st.button("Add to List", use_container_width=True):
             if new_todo.strip():
@@ -56,7 +53,6 @@ def create_main_page():
         
         st.markdown("<div style='margin: 15px 0;'></div>", unsafe_allow_html=True)
         
-        # Render clean checklist items
         updated_checklist = []
         for idx, item in enumerate(st.session_state.checklist):
             is_checked = st.checkbox(item["text"], value=item["checked"], key=f"todo_check_{idx}")
@@ -70,7 +66,6 @@ def create_main_page():
 
         st.divider()
         
-        # Action Stack
         if st.button("💾 Save Journey Layout", type="primary", use_container_width=True):
             city = st.session_state.get("city_search_val", "").strip()
             if not city:
@@ -88,7 +83,6 @@ def create_main_page():
     # --- MAIN ENGINE VIEW ---
     st.markdown("<h2 style='font-weight: 300; letter-spacing: -1px;'>Where are we heading?</h2>", unsafe_allow_html=True)
     
-    # Modern Horizontal Search Box
     search_col, button_col = st.columns([4, 1])
     with search_col:
         city_entry = st.text_input("Search City", value=st.session_state.get("city_search_val", ""), label_visibility="collapsed", placeholder="Enter city name (e.g. Paris)")
@@ -99,14 +93,13 @@ def create_main_page():
         if city_entry.strip():
             st.session_state.city_search_val = city_entry.strip()
             st.session_state.weather_cache = Database.fetch_weather(city_entry.strip())
-            st.session_state.news_cache = Database.fetch_news(city_entry.strip())
+            st.session_state.tripadvisor_cache = Database.fetch_tripadvisor(city_entry.strip())
             st.rerun()
         else:
             st.warning("Please input a valid target location name.")
 
     st.markdown("<div style='margin: 20px 0;'></div>", unsafe_allow_html=True)
     
-    # Structural layout separation
     left_panel, right_panel = st.columns([2, 3])
 
     # Left Panel: Weather Summary Bento Box
@@ -124,34 +117,38 @@ def create_main_page():
         weather_bento_html = f"<div class='ios-bento'><p class='bento-tag'>🌤 Weather Report</p>{weather_content}</div>".replace("\n", "").replace("\r", "")
         st.markdown(weather_bento_html, unsafe_allow_html=True)
 
-    # Right Panel: Modern Feed Flow Bento Box (Mapped to SerpApi Architecture)
+    # Right Panel: TripAdvisor Travel Advice Bento Box (iOS UI Styling)
     with right_panel:
-        if "news_cache" in st.session_state and st.session_state.news_cache:
-            articles_html = ""
-            for idx, article in enumerate(st.session_state.news_cache[:5], 1):
-                title = article.get('title', 'Untitled Context Event').replace("'", "&#39;").replace('"', '&quot;')
-                title = title.replace("\n", " ").replace("\r", " ").strip()
-                url = article.get('link', '#')
+        if "tripadvisor_cache" in st.session_state and st.session_state.tripadvisor_cache:
+            advice_html = ""
+            for idx, item in enumerate(st.session_state.tripadvisor_cache[:5], 1):
+                title = item.get('title', 'Premium Location').replace("'", "&#39;").replace('"', '&quot;').strip()
+                url = item.get('link', '#')
+                rating = item.get('rating', 'N/A')
+                reviews = item.get('reviews', 0)
+                description = item.get('description', '').replace("'", "&#39;").replace('"', '&quot;').strip()
                 
-                articles_html += (
-                    f"<div style='margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid rgba(142,142,147,0.15);'>"
-                    f"<a href='{url}' style='text-decoration:none;color:inherit;' target='_blank'>"
-                    f"<h5 style='font-weight:500;margin:0 0 4px 0;font-size:15px;line-height:1.45;'>{title}</h5>"
+                desc_snippet = f"<p style='font-size:13px; color:#cccccc; margin:4px 0 0 0; line-height:1.4;'>{description}</p>" if description else ""
+                
+                advice_html += (
+                    f"<div style='margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid rgba(142,142,147,0.15);'>"
+                    f"<a href='{url}' style='text-decoration:none; color:inherit;' target='_blank'>"
+                    f"<h5 style='font-weight:500; margin:0 0 3px 0; font-size:15px; color:#007AFF;'>{title}</h5>"
                     f"</a>"
-                    f"<p style='font-size:11px;color:#8e8e93;margin:0;'>Source Feed Module #{idx}</p>"
+                    f"<p style='font-size:11px; color:#8e8e93; margin:0;'>⭐ {rating} ({reviews} reviews) • Recommendation #{idx}</p>"
+                    f"{desc_snippet}"
                     f"</div>"
                 )
-            news_content = f"<div style='margin-top:6px;'>{articles_html}</div>"
-        elif "news_cache" in st.session_state:
-            news_content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>No regional context elements found for this city.</p>"
+            advice_content = f"<div style='margin-top:6px;'>{advice_html}</div>"
+        elif "tripadvisor_cache" in st.session_state:
+            advice_content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>No TripAdvisor travel entries found for this destination.</p>"
         else:
-            news_content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>Awaiting destination choice...</p>"
+            advice_content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>Awaiting destination choice...</p>"
 
-        news_bento_html = f"<div class='ios-bento'><p class='bento-tag'>📰 Local Context Briefing</p>{news_content}</div>".replace("\n", "").replace("\r", "")
-        st.markdown(news_bento_html, unsafe_allow_html=True)
+        tripadvisor_bento_html = f"<div class='ios-bento'><p class='bento-tag'>🧳 TripAdvisor Travel Advice</p>{advice_content}</div>".replace("\n", "").replace("\r", "")
+        st.markdown(tripadvisor_bento_html, unsafe_allow_html=True)
 
 def create_history_page():
-    # Top Action Row
     top_col1, top_col2 = st.columns([4, 1])
     with top_col1:
         st.markdown("<h2 style='font-weight: 300; letter-spacing: -1px;'>Saved Journeys Archive</h2>", unsafe_allow_html=True)
@@ -160,7 +157,6 @@ def create_history_page():
             st.session_state.page = "main"
             st.rerun()
 
-    # Sleek sort control inline filter
     sort_option = st.selectbox("Order Sequence Filter", ["Newest First", "Oldest First", "Alphabetical (A → Z)"], label_visibility="collapsed")
     sort_mapping = {"Newest First": "newest", "Oldest First": "oldest", "Alphabetical (A → Z)": "atoz"}
     
@@ -171,12 +167,10 @@ def create_history_page():
         st.info("No logs present inside this profile catalog yet.")
         return
 
-    # Responsive Grid Layout
     cols = st.columns(2)
     for idx, (trip_id, city) in enumerate(sorted_trips):
         with cols[idx % 2]:
             with st.container(border=True):
-                # Clean Header Title + Delete Layout Split
                 card_head_left, card_head_right = st.columns([5, 1])
                 card_head_left.markdown(f"<h4 style='font-weight: 400; margin: 0;'>{city.title()}</h4>", unsafe_allow_html=True)
                 
@@ -185,26 +179,21 @@ def create_history_page():
                     st.rerun()
                 
                 st.markdown("<div style='margin: 8px 0;'></div>", unsafe_allow_html=True)
-                
-                # Dynamic Weather Fetch Inline
                 st.markdown("<p style='font-size: 11px; text-transform: uppercase; color: #888888; margin-bottom: 2px;'>Weather Capture</p>", unsafe_allow_html=True)
+                
                 weather_str = Database.fetch_weather(city).replace('\n', '  |  ')
                 st.markdown(f"<p style='font-size: 13px; color: #cccccc;'>{weather_str}</p>", unsafe_allow_html=True)
-                
                 st.markdown("<div style='margin: 8px 0;'></div>", unsafe_allow_html=True)
                 
-                # Separate task logs into precise category subsets
                 items = Database.load_items(trip_id)
                 pending_items = [item_text for item_text, checked in items if not checked]
                 completed_items = [item_text for item_text, checked in items if checked]
                 
-                # Render Unchecked Tasks (Always shows what task isn't done yet)
                 if pending_items:
                     st.markdown("<p style='font-size: 11px; text-transform: uppercase; color: #ffbc00; margin-bottom: 4px;'>⏳ Remaining Tasks</p>", unsafe_allow_html=True)
                     for item_text in pending_items:
                         st.markdown(f"<p style='font-size: 13px; margin: 2px 0; color: #ffffff;'>◦ {item_text}</p>", unsafe_allow_html=True)
                 
-                # Render Completed Tasks
                 if completed_items:
                     if pending_items:
                         st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)
@@ -217,10 +206,8 @@ def create_history_page():
                 
                 st.markdown("<div style='margin-top: 14px;'></div>", unsafe_allow_html=True)
                 
-                # --- STRUCTURED TEXT CONSTRUCTOR FOR CLIPBOARD ---
                 copy_text = f"📌 SEYAHATIFY TRAVEL PACK: {city.title()}\n"
                 copy_text += f"🌤️ Weather Profile: {weather_str}\n\n"
-                
                 copy_text += "⏳ REMAINING TO-DO ITEMS:\n"
                 if pending_items:
                     for item in pending_items:
@@ -235,5 +222,4 @@ def create_history_page():
                 else:
                     copy_text += "  (None)\n"
                 
-                # Fixed line 239: Using st.code with language=None provides a clean clipboard widget natively
                 st.code(copy_text, language=None)
