@@ -167,10 +167,13 @@ class Database:
         """Calls SerpApi TripAdvisor Search API using secure Streamlit secrets."""
         try:
             api_key = st.secrets["SERPAPI_API_KEY"]
+            # Added &ssrc=a parameter to search across all categories (Hotels, Attractions, Restaurants)
             url = (f"https://serpapi.com/search.json"
-                   f"?engine=tripadvisor&q={city}&api_key={api_key}")
+                   f"?engine=tripadvisor&q={city}&ssrc=a&api_key={api_key}")
             data = requests.get(url, timeout=5).json()
-            return data.get("locations", [])
+            
+            # FIXED: Changed from data.get("locations", []) to data.get("places", [])
+            return data.get("places", [])
         except Exception:
             pass
         return []
