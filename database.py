@@ -163,28 +163,14 @@ class Database:
             return "⚠ Could not fetch weather"
 
     @staticmethod
-    def fetch_news(city):
-        """Calls SerpApi Google News Light API using secure Streamlit secrets."""
+    def fetch_tripadvisor(city):
+        """Calls SerpApi TripAdvisor Search API using secure Streamlit secrets."""
         try:
             api_key = st.secrets["SERPAPI_API_KEY"]
             url = (f"https://serpapi.com/search.json"
-                   f"?engine=google_news_light&q={city}&api_key={api_key}")
+                   f"?engine=tripadvisor&q={city}&api_key={api_key}")
             data = requests.get(url, timeout=5).json()
-            return data.get("news_results", [])
-        except Exception:
-            pass
-        return []
-
-    @staticmethod
-    def fetch_events(city):
-        """Calls SerpApi Google Events API using secure Streamlit secrets."""
-        try:
-            api_key = st.secrets["SERPAPI_API_KEY"]
-            # Target query parameters configured specifically for the Google Events engine
-            url = (f"https://serpapi.com/search.json"
-                   f"?engine=google_events&q=Events+in+{city}&api_key={api_key}")
-            data = requests.get(url, timeout=5).json()
-            return data.get("events_results", [])
+            return data.get("locations", [])
         except Exception:
             pass
         return []
