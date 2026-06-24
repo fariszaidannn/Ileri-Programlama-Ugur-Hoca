@@ -42,28 +42,6 @@ def create_auth_page():
                         st.error("This username is already taken.")
 
 def create_main_page():
-    # --- BACKGROUND COMMUNICATION BRIDGE ---
-    # Inject CSS to completely hide the background communication input box
-    st.markdown("""
-        <style>
-        div[data-testid="stElementContainer"]:has(input[placeholder="hidden_action_trigger"]) {
-            display: none !important;
-            height: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-    
-    # FIXED: Replaced aria-label filtering with absolute placeholder matching for robust cross-browser DOM lookups
-    hidden_action = st.text_input("hidden_action", placeholder="hidden_action_trigger", key="hidden_action_input", label_visibility="collapsed")
-    
-    if hidden_action:
-        if not any(item["text"] == hidden_action for item in st.session_state.checklist):
-            st.session_state.checklist.append({"text": hidden_action, "checked": False})
-        st.session_state.hidden_action_input = ""  # Clear state immediately
-        st.rerun()
-
     # --- MINIMAL SIDEBAR (Checklist Layout) ---
     with st.sidebar:
         st.markdown("<h3 style='font-weight: 400; letter-spacing: -0.5px;'>Trip Checklist</h3>", unsafe_allow_html=True)
@@ -117,6 +95,7 @@ def create_main_page():
             st.session_state.city_search_val = city_entry.strip()
             st.session_state.weather_cache = Database.fetch_weather(city_entry.strip())
             st.session_state.tripadvisor_cache = Database.fetch_tripadvisor(city_entry.strip())
+            st.session_state.images_light_cache = Database.fetch_images_light(city_entry.strip())
             st.rerun()
         else:
             st.warning("Please input a valid target location name.")
@@ -125,8 +104,9 @@ def create_main_page():
     
     left_panel, right_panel = st.columns([2, 3])
 
-    # Left Panel: Weather Summary Bento Box
+    # Left Panel: Weather Summary & Google Images Light Bento Boxes
     with left_panel:
+        # 1. Weather Summary Box
         if "weather_cache" in st.session_state:
             if "⚠" in st.session_state.weather_cache:
                 weather_content = f"<p style='color:#ff4b4b;margin:0;'>{st.session_state.weather_cache}</p>"
@@ -139,6 +119,56 @@ def create_main_page():
         
         weather_bento_html = f"<div class='ios-bento'><p class='bento-tag'>🌤 Weather Report</p>{weather_content}</div>".replace("\n", "").replace("\r", "")
         st.markdown(weather_bento_html, unsafe_allow_html=True)
+
+        # 2. Google Images Light Destination Highlights Box
+        if "images_light_cache" in st.session_state and st.session_state.images_light_cache:
+            current_city = st.session_state.get("city_search_val", "Destination")
+            images_html = ""
+            for idx, item in enumerate(st.session_state.images_light_cache[:3], 1):
+                title = item.get('title', 'Local Highlight').replace("'", "&#39;").replace('"', '&quot;').strip()
+                url = item.get('link', '#')
+                thumb_url = item.get('thumbnail', '')
+                source = item.get('source', 'Web Discovery')
+                
+                # Safe context string parameter encoders
+                encoded_url = urllib.parse.quote(url)
+                encoded_title = urllib.parse.quote(f"Take a look at this destination highlight from {current_city.title()}: {title}")
+                
+                # Standard web safe direct social media popup endpoints
+                share_fb = f"https://www.facebook.com/sharer/sharer.php?u={encoded_url}"
+                share_tw = f"https://twitter.com/intent/tweet?url={encoded_url}&text={encoded_title}"
+                share_wa = f"https://api.whatsapp.com/send?text={encoded_title}%20{encoded_url}"
+                
+                img_tag = f"<img src='{thumb_url}' style='width: 60px; height: 60px; object-fit: cover; border-radius: 10px; flex-shrink: 0;' />" if thumb_url else ""
+                item_border = "border-bottom: 1px solid rgba(142,142,147,0.15);" if idx < 3 else ""
+                
+                images_html += (
+                    f"<div style='display: flex; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; {item_border} align-items: center;'>"
+                    f"{img_tag}"
+                    f"<div style='flex-grow: 1; min-width: 0;'>"
+                    f"<a href='{url}' style='text-decoration:none; color:inherit;' target='_blank'>"
+                    f"<p style='font-weight:500; margin:0 0 2px 0; font-size:14px; color:#007AFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>{title}</p>"
+                    f"</a>"
+                    f"<p style='font-size:11px; color:#8e8e93; margin:0 0 4px 0;'>Source: {source}</p>"
+                    f"<div style='display: flex; gap: 6px; align-items: center;'>"
+                    f"<span style='font-size:10px; color:#8e8e93; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;'>Share:</span>"
+                    f"<a href='{share_fb}' target='_blank' style='text-decoration:none; font-size:10px; color:#1877F2; background:rgba(24,119,242,0.08); padding:2px 6px; border-radius:5px; font-weight:600;'>FB</a>"
+                    f"<a href='{share_tw}' target='_blank' style='text-decoration:none; font-size:10px; color:#1DA1F2; background:rgba(29,161,242,0.08); padding:2px 6px; border-radius:5px; font-weight:600;'>X</a>"
+                    f"<a href='{share_wa}' target='_blank' style='text-decoration:none; font-size:10px; color:#25D366; background:rgba(37,211,102,0.08); padding:2px 6px; border-radius:5px; font-weight:600;'>WA</a>"
+                    f"</div>"
+                    f"</div>"
+                    f"</div>"
+                )
+            images_bento_html = f"<div class='ios-bento'><p class='bento-tag'>📸 Destination Highlights</p>{images_html}</div>".replace("\n", "").replace("\r", "")
+            st.markdown(images_bento_html, unsafe_allow_html=True)
+        else:
+            if "tripadvisor_cache" in st.session_state:
+                content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>No local highlight items discovered.</p>"
+            else:
+                content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>Awaiting destination choice...</p>"
+            
+            images_fallback_html = f"<div class='ios-bento'><p class='bento-tag'>📸 Destination Highlights</p>{content}</div>".replace("\n", "").replace("\r", "")
+            st.markdown(images_fallback_html, unsafe_allow_html=True)
 
     # Right Panel: TripAdvisor Travel Advice Separated Sections
     with right_panel:
@@ -199,19 +229,13 @@ def create_main_page():
                     
                     item_border = "border-bottom: 1px solid rgba(142,142,147,0.15);" if idx < len(hotel_items) else ""
                     
-                    js_safe_title = title.replace("'", "\\'").replace('"', '\\"')
-                    
-                    # FIXED: Added React prototype Native Setter configuration via vanilla Javascript to cleanly pass inputs into Streamlit websocket handlers
                     hotels_html += (
                         f"<div style='display: flex; gap: 16px; margin-bottom: 14px; padding-bottom: 14px; {item_border} align-items: flex-start;'>"
                         f"{img_tag}"
                         f"<div style='flex-grow: 1; min-width: 0;'>"
-                        f"<div style='display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 3px;'>"
                         f"<a href='{url}' style='text-decoration:none; color:inherit;' target='_blank'>"
-                        f"<h5 style='font-weight:600; margin:0; font-size:16px; color:#007AFF;'>{title}</h5>"
+                        f"<h5 style='font-weight:600; margin:0 0 3px 0; font-size:16px; color:#007AFF;'>{title}</h5>"
                         f"</a>"
-                        f"<button onclick='const el = document.querySelector(\"input[placeholder=\\\"hidden_action\\\"]\") || document.querySelector(\"input[placeholder=\\\"hidden_action_trigger\\\"]\"); if (el) {{ const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, \"value\").set; setter.call(el, \"Book {js_safe_title}\"); el.dispatchEvent(new Event(\"input\", {{ bubbles: true }})); }}' style='cursor:pointer; border:none; font-size:11px; background: rgba(0,122,255,0.12); padding: 3px 8px; border-radius: 7px; color: #007AFF; font-weight:600; display:inline-flex; align-items:center; gap:3px;' title='Add to Trip Checklist'>➕ Add</button>"
-                        f"</div>"
                         f"<p style='font-size:11px; color:#8e8e93; margin:0;'>⭐ {rating} ({reviews} reviews) • Option #{idx}</p>"
                         f"{desc_snippet}"
                         f"</div>"
