@@ -304,6 +304,16 @@ def create_history_page():
                 
                 st.markdown("<div style='margin-top: 14px;'></div>", unsafe_allow_html=True)
                 
+                # --- NEW WORKSPACE EDIT/LOAD TRIGGER ---
+                if st.button("✏️ Load & Edit Journey", key=f"edit_{trip_id}", use_container_width=True):
+                    st.session_state.city_search_val = city
+                    st.session_state.checklist = [{"text": text, "checked": bool(chk)} for text, chk in items]
+                    st.session_state.weather_cache = Database.fetch_weather(city)
+                    st.session_state.tripadvisor_cache = Database.fetch_tripadvisor(city)
+                    st.session_state.images_light_cache = Database.fetch_images_light(city)
+                    st.session_state.page = "main"
+                    st.rerun()
+                
                 copy_text = f"📌 SEYAHATIFY TRAVEL PACK: {city.title()}\n"
                 copy_text += f"🌤️ Weather Profile: {weather_str}\n\n"
                 copy_text += "⏳ REMAINING TO-DO ITEMS:\n"
