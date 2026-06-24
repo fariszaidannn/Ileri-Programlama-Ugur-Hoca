@@ -42,12 +42,26 @@ def create_auth_page():
                         st.error("This username is already taken.")
 
 def create_main_page():
-    # Intercept parameter injection events to dynamically update checklist array
-    if "add_todo" in st.query_params:
-        todo_task = st.query_params["add_todo"]
-        if todo_task and not any(item["text"] == todo_task for item in st.session_state.checklist):
-            st.session_state.checklist.append({"text": todo_task, "checked": False})
-        st.query_params.clear()
+    # --- BACKGROUND COMMUNICATION BRIDGE ---
+    # Inject CSS to completely hide the background communication input box
+    st.markdown("""
+        <style>
+        div[data-testid="stElementContainer"]:has(input[aria-label="hidden_action"]) {
+            display: none !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    # Render hidden native input box to intercept JavaScript clicks instantaneously
+    hidden_action = st.text_input("hidden_action", key="hidden_action_input", label_visibility="collapsed")
+    
+    if hidden_action:
+        if not any(item["text"] == hidden_action for item in st.session_state.checklist):
+            st.session_state.checklist.append({"text": hidden_action, "checked": False})
+        st.session_state.hidden_action_input = ""  # Clear state immediately
         st.rerun()
 
     # --- MINIMAL SIDEBAR (Checklist Layout) ---
@@ -185,9 +199,10 @@ def create_main_page():
                     
                     item_border = "border-bottom: 1px solid rgba(142,142,147,0.15);" if idx < len(hotel_items) else ""
                     
-                    todo_string = f"Book {title}"
-                    encoded_todo = urllib.parse.quote(todo_string)
+                    # Escape quotes safely for JavaScript string initialization literals
+                    js_safe_title = title.replace("'", "\\'").replace('"', '\\"')
                     
+                    # FIXED: Changed from anchor href parameter changes to an inline javascript trigger execution element
                     hotels_html += (
                         f"<div style='display: flex; gap: 16px; margin-bottom: 14px; padding-bottom: 14px; {item_border} align-items: flex-start;'>"
                         f"{img_tag}"
@@ -196,7 +211,7 @@ def create_main_page():
                         f"<a href='{url}' style='text-decoration:none; color:inherit;' target='_blank'>"
                         f"<h5 style='font-weight:600; margin:0; font-size:16px; color:#007AFF;'>{title}</h5>"
                         f"</a>"
-                        f"<a href='?add_todo={encoded_todo}' target='_self' style='text-decoration:none; font-size:11px; background: rgba(0,122,255,0.12); padding: 3px 8px; border-radius: 7px; color: #007AFF; font-weight:600; display:inline-flex; align-items:center; gap:3px;' title='Add to Trip Checklist'>➕ Add</a>"
+                        f"<button onclick=\"const el = window.parent.document.querySelector('input[aria-label=\\'hidden_action\\']') || document.querySelector('input[aria-label=\\'hidden_action\\']'); if (el) {{ el.value = 'Book {js_safe_title}'; el.dispatchEvent(new Event('input', {{ bubbles: true }})); el.dispatchEvent(new Event('change', {{ bubbles: true }})); }}\" style='cursor:pointer; border:none; font-size:11px; background: rgba(0,122,255,0.12); padding: 3px 8px; border-radius: 7px; color: #007AFF; font-weight:600; display:inline-flex; align-items:center; gap:3px;' title='Add to Trip Checklist'>➕ Add</button>"
                         f"</div>"
                         f"<p style='font-size:11px; color:#8e8e93; margin:0;'>⭐ {rating} ({reviews} reviews) • Option #{idx}</p>"
                         f"{desc_snippet}"
@@ -208,12 +223,15 @@ def create_main_page():
                 
         else:
             if "tripadvisor_cache" in st.session_state:
-                content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>No TripAdvisor travel entries found for this destination.</p>"
+                content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>No travel data found for this destination.</p>"
             else:
                 content = "<p style='color:#8e8e93;font-size:14px;margin:0;'>Awaiting destination choice...</p>"
             
-            fallback_bento_html = f"<div class='ios-bento'><p class='bento-tag'>🧳 TripAdvisor Travel Advice</p>{content}</div>".replace("\n", "").replace("\r", "")
-            st.markdown(fallback_bento_html, unsafe_allow_html=True)
+            overview_fallback_html = f"<div class='ios-bento'><p class='bento-tag'>✨ Destination Overview</p>{content}</div>".replace("\n", "").replace("\r", "")
+            st.markdown(overview_fallback_html, unsafe_allow_html=True)
+            
+            hotels_fallback_html = f"<div class='ios-bento'><p class='bento-tag'>🏨 Hotels & Recommendations</p>{content}</div>".replace("\n", "").replace("\r", "")
+            st.markdown(hotels_fallback_html, unsafe_allow_html=True)
 
 def create_history_page():
     top_col1, top_col2 = st.columns([4, 1])
